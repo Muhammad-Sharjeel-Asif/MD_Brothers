@@ -26,7 +26,7 @@ interface Project {
     };
   };
   tags: string[];
-  category: string;
+  categoryName: string; // Updated from category
   slug: string;
 }
 
@@ -50,25 +50,23 @@ const ProductCards: React.FC = () => {
         discountPercentage,
         "imageUrl": productImage.asset->url,
         tags,
-        category,
+        "categoryName": category->name,
         "slug": slug.current
       }`;
 
-     // Type inference here: Sanity will return `unknown`, so we define a return type directly.
-    const data: Project[] = await sanity.fetch(query);
+      const data: Project[] = await sanity.fetch(query);
 
-    // Infer types for categories automatically
-    const allCategories = Array.from(
-      new Set(data.map((product) => product.category).filter(Boolean))
-    );
+      const allCategories = Array.from(
+        new Set(data.map((product) => product.categoryName).filter(Boolean))
+      );
 
-    const sortedCategories = ["All", ...allCategories.sort()];
-    setCategories(sortedCategories);
-    setProducts(data);
-  } catch (error) {
-    console.error("Error fetching products:", error);
-  }
-};
+      const sortedCategories = ["All", ...allCategories.sort()];
+      setCategories(sortedCategories);
+      setProducts(data);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
 
   React.useEffect(() => {
     fetchProducts();
@@ -101,7 +99,7 @@ const ProductCards: React.FC = () => {
   const filteredProducts =
     selectedCategory === "All"
       ? products
-      : products.filter((product) => product.category === selectedCategory);
+      : products.filter((product) => product.categoryName === selectedCategory);
 
   // Pagination Logic
   const indexOfLastProduct = currentPage * productsPerPage;
@@ -182,13 +180,12 @@ const ProductCards: React.FC = () => {
             </div>
             <div className="flex flex-col items-center justify-between h-full">
               <button
-                className={`mt-4 w-full rounded-md py-3 px-11 transition-all duration-300 ${
-                  addedItems.has(product._id)
-                    ? 'bg-green-600 text-white'
-                    : addingItems.has(product._id)
+                className={`mt-4 w-full rounded-md py-3 px-11 transition-all duration-300 ${addedItems.has(product._id)
+                  ? 'bg-green-600 text-white'
+                  : addingItems.has(product._id)
                     ? 'bg-gray-400 text-white cursor-not-allowed'
                     : 'bg-[#7A6D3A] text-white hover:bg-[#B88E2F]'
-                }`}
+                  }`}
                 onClick={() => handleAddToCart(product)}
                 disabled={addingItems.has(product._id)}
               >

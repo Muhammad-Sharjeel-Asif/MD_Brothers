@@ -10,15 +10,82 @@ import { useCartContext } from '@/context/CartContext';
 
 const CheckOutPage = () => {
   const { isSignedIn, isLoaded } = useUser();
-  const { cart, cartTotal } = useCartContext();
+  const { cart, cartTotal, clearCart } = useCartContext();
   const router = useRouter();
+
+  const [formData, setFormData] = React.useState({
+    firstName: '',
+    lastName: '',
+    companyName: '',
+    country: 'Pakistan',
+    streetAddress: '',
+    city: '',
+    province: 'Western Province',
+    zipCode: '',
+    phone: '',
+    email: '',
+    additionalInfo: ''
+  });
+
+  const [paymentMethod, setPaymentMethod] = React.useState('Direct Bank Transfer');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!formData.firstName || !formData.email || !formData.phone || !formData.streetAddress) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer: {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone,
+            address: `${formData.streetAddress}, ${formData.city}, ${formData.province}`,
+            city: formData.city,
+            zipCode: formData.zipCode,
+          },
+          items: cart,
+          totalPrice: cartTotal,
+          paymentMethod: paymentMethod,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert("Order placed successfully!");
+        clearCart();
+        router.push('/');
+      } else {
+        alert("Failed to place order: " + data.error);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("An error occurred while placing your order.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Redirect to cart if cart is empty
   React.useEffect(() => {
-    if (cart.length === 0) {
+    if (cart.length === 0 && !isSubmitting) {
       router.push('/cart');
     }
-  }, [cart, router]);
+  }, [cart, router, isSubmitting]);
 
   // Show sign-in prompt if user is not signed in
   if (!isLoaded) {
@@ -72,8 +139,11 @@ const CheckOutPage = () => {
                   First Name
                   <br />
                   <input
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
                     type="text"
-                    className="w-full sm:w-[211px] h-[75px] border border-black rounded-md mt-2"
+                    className="w-full sm:w-[211px] h-[75px] border border-black rounded-md mt-2 px-4"
                   />
                 </label>
               </div>
@@ -82,8 +152,11 @@ const CheckOutPage = () => {
                   Last Name
                   <br />
                   <input
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
                     type="text"
-                    className="w-full sm:w-[211px] h-[75px] border border-black rounded-md mt-2"
+                    className="w-full sm:w-[211px] h-[75px] border border-black rounded-md mt-2 px-4"
                   />
                 </label>
               </div>
@@ -94,8 +167,11 @@ const CheckOutPage = () => {
             <br />
             <br />
             <input
+              name="companyName"
+              value={formData.companyName}
+              onChange={handleInputChange}
               type="text"
-              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md"
+              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md px-4"
             />
             <br />
             <br />
@@ -104,6 +180,9 @@ const CheckOutPage = () => {
             <br />
             <div className="relative w-full lg:w-[453px] h-[75px]">
               <input
+                name="country"
+                value={formData.country}
+                onChange={handleInputChange}
                 type="text"
                 className="w-full h-full border border-black rounded-md pl-4 pr-10"
               />
@@ -120,8 +199,11 @@ const CheckOutPage = () => {
             <br />
             <br />
             <input
+              name="streetAddress"
+              value={formData.streetAddress}
+              onChange={handleInputChange}
               type="text"
-              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md"
+              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md px-4"
             />
             <br />
             <br />
@@ -129,8 +211,11 @@ const CheckOutPage = () => {
             <br />
             <br />
             <input
+              name="city"
+              value={formData.city}
+              onChange={handleInputChange}
               type="text"
-              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md"
+              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md px-4"
             />
             <br />
             <br />
@@ -139,6 +224,9 @@ const CheckOutPage = () => {
             <br />
             <div className="relative w-full lg:w-[453px] h-[75px]">
               <input
+                name="province"
+                value={formData.province}
+                onChange={handleInputChange}
                 placeholder="Western Province"
                 type="text"
                 className="w-full h-full border border-black rounded-md pl-4 pr-10 text-[#333333]"
@@ -156,8 +244,11 @@ const CheckOutPage = () => {
             <br />
             <br />
             <input
+              name="zipCode"
+              value={formData.zipCode}
+              onChange={handleInputChange}
               type="text"
-              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md"
+              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md px-4"
             />
             <br />
             <br />
@@ -165,8 +256,11 @@ const CheckOutPage = () => {
             <br />
             <br />
             <input
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
               type="text"
-              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md"
+              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md px-4"
             />
             <br />
             <br />
@@ -174,8 +268,11 @@ const CheckOutPage = () => {
             <br />
             <br />
             <input
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
               type="text"
-              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md"
+              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md px-4"
             />
             <br />
             <br />
@@ -183,6 +280,9 @@ const CheckOutPage = () => {
             <br />
             <br />
             <input
+              name="additionalInfo"
+              value={formData.additionalInfo}
+              onChange={handleInputChange}
               placeholder="Additional information"
               type="text"
               className="w-full lg:w-[453px] h-[75px] border border-black rounded-md text-[#333333] pl-4"
@@ -217,25 +317,37 @@ const CheckOutPage = () => {
             </div>
             <div className="border-b border-[#D9D9D9] w-full mt-6"></div>
             <div className="mt-8">
-              <div className="flex items-center gap-3">
-                <div className="bg-black rounded-full w-[14px] h-[14px]"></div>
+              <div
+                className="flex items-center gap-3 cursor-pointer"
+                onClick={() => setPaymentMethod('Direct Bank Transfer')}
+              >
+                <div className={`rounded-full w-[14px] h-[14px] ${paymentMethod === 'Direct Bank Transfer' ? 'bg-black' : 'border border-[#9F9F9F]'}`}></div>
                 <h1 className="text-[20px] font-semibold">Direct Bank Transfer</h1>
               </div>
               <p className="text-[#333333] mt-2">
                 Make your payment directly into our bank account. Please use your Order ID as the payment reference. Your order will not be shipped until the funds have cleared in our account.
               </p>
-              <div className="flex items-center gap-3 mt-6">
-                <div className="border border-[#9F9F9F] rounded-full w-[14px] h-[14px]"></div>
+              <div
+                className="flex items-center gap-3 mt-6 cursor-pointer"
+                onClick={() => setPaymentMethod('Cash On Delivery')}
+              >
+                <div className={`rounded-full w-[14px] h-[14px] ${paymentMethod === 'Cash On Delivery' ? 'bg-black' : 'border border-[#9F9F9F]'}`}></div>
                 <h1 className="text-[18px] font-semibold text-[#333333]">Cash On Delivery</h1>
               </div>
             </div>
             <div className="mt-10">
-              <button className="w-full lg:w-[318px] h-[64px] border border-black rounded-2xl hover:bg-black hover:text-white transition">Place order</button>
+              <button
+                disabled={isSubmitting}
+                onClick={handlePlaceOrder}
+                className="w-full lg:w-[318px] h-[64px] border border-black rounded-2xl hover:bg-black hover:text-white transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Placing Order...' : 'Place order'}
+              </button>
             </div>
           </div>
         </div>
       </div>
-      <Feature/>
+      <Feature />
     </>
   );
 };

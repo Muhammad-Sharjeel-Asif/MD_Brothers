@@ -5,12 +5,23 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCartContext } from "@/context/CartContext";
 import { ClerkLoaded, SignInButton, useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const { cart, removeFromCart, cartTotal } = useCartContext();
   const { user } = useUser();
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery("");
+    }
+  };
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -29,12 +40,20 @@ const Navbar = () => {
     }
   }, [menuOpen, cartOpen]);
 
+  const role = (user?.publicMetadata as any)?.role;
+  const isAdmin = role === 'admin' || user?.emailAddresses[0]?.emailAddress === 'msharjeelasif@gmail.com';
+
   const menuItems = [
     {
       href: "/",
       label: "Home",
       icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
     },
+    ...(isAdmin ? [{
+      href: "/admin",
+      label: "Admin Dashboard",
+      icon: <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+    }] : []),
     {
       href: "/shop",
       label: "Shop",
@@ -82,6 +101,11 @@ const Navbar = () => {
         <Link href="/" className="hover:text-[#B88E2F] transition font-medium">
           Home
         </Link>
+        {isAdmin && (
+          <Link href="/admin" className="text-red-600 hover:text-red-800 transition font-bold">
+            Dashboard
+          </Link>
+        )}
         <Link href="/shop" className="hover:text-[#B88E2F] transition font-medium">
           Shop
         </Link>
@@ -101,12 +125,21 @@ const Navbar = () => {
 
       {/* Actions (Cart, Search, Favorites) */}
       <div className="hidden sm:flex items-center space-x-4">
-        {/* Search */}
-        <Link href="/search">
-          <svg className="w-6 h-6 text-gray-700 hover:text-[#B88E2F] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </Link>
+        {/* Search Bar */}
+        <form onSubmit={handleSearch} className="relative group">
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-40 lg:w-64 pl-4 pr-10 py-2 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-[#B88E2F] transition-all duration-300"
+          />
+          <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2">
+            <svg className="w-5 h-5 text-gray-400 group-hover:text-[#B88E2F] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+        </form>
 
         {/* Favorites - Only for logged in users */}
         <ClerkLoaded>
@@ -203,17 +236,15 @@ const Navbar = () => {
 
       {/* Mobile Menu Overlay */}
       <div
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 md:hidden ${
-          menuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 md:hidden ${menuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
         onClick={toggleMenu}
       />
 
       {/* Mobile Menu Sidebar */}
       <div
-        className={`fixed top-0 right-0 w-[80%] max-w-sm h-full bg-white shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ease-out md:hidden ${
-          menuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed top-0 right-0 w-[80%] max-w-sm h-full bg-white shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ease-out md:hidden ${menuOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         {/* Menu Header */}
         <div className="bg-gradient-to-r from-[#B88E2F] to-[#8C6D23] text-white px-6 py-5 flex items-center justify-between">
@@ -264,6 +295,24 @@ const Navbar = () => {
               </div>
             )}
           </ClerkLoaded>
+        </div>
+
+        {/* Mobile Search */}
+        <div className="px-6 py-4 border-b border-gray-100">
+          <form onSubmit={handleSearch} className="relative">
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-4 pr-10 py-3 bg-[#FAFAFA] border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#B88E2F] transition-all duration-300"
+            />
+            <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2">
+              <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </form>
         </div>
 
         {/* Menu Items */}
@@ -331,17 +380,15 @@ const Navbar = () => {
       <>
         {/* Backdrop */}
         <div
-          className={`fixed inset-0 bg-black/20 z-40 transition-opacity duration-250 ease-in-out ${
-            cartOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-          }`}
+          className={`fixed inset-0 bg-black/20 z-40 transition-opacity duration-250 ease-in-out ${cartOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+            }`}
           onClick={toggleCart}
         />
 
         {/* Cart Sidebar */}
         <div
-          className={`fixed top-0 right-0 w-full sm:w-96 h-full bg-white shadow-lg z-50 flex flex-col will-change-transform transition-transform duration-250 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-            cartOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+          className={`fixed top-0 right-0 w-full sm:w-96 h-full bg-white shadow-lg z-50 flex flex-col will-change-transform transition-transform duration-250 ease-[cubic-bezier(0.4,0,0.2,1)] ${cartOpen ? "translate-x-0" : "translate-x-full"
+            }`}
         >
           {/* Cart Header */}
           <div className="bg-gradient-to-r from-[#B88E2F] to-[#8C6D23] text-white px-5 py-4 flex items-center justify-between shadow-sm">

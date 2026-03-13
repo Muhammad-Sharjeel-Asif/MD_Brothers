@@ -11,20 +11,20 @@ export const product = defineType({
             validation: (rule) => rule.required(),
             type: "string"
         },
-            {
-                name: "slug",
-                title: "Slug",
-                type: "slug",
-                options: {
-                    source: 'title',
-                    maxLength: 96,
-                },
-            },
         {
-            name:"description",
-            type:"text",
+            name: "slug",
+            title: "Slug",
+            type: "slug",
+            options: {
+                source: 'title',
+                maxLength: 96,
+            },
+        },
+        {
+            name: "description",
+            type: "text",
             validation: (rule) => rule.required(),
-            title:"Description",
+            title: "Description",
         },
         {
             name: "productImage",
@@ -45,27 +45,28 @@ export const product = defineType({
             of: [{ type: "string" }]
         },
         {
-            name:"dicountPercentage",
-            type:"number",
-            title:"Discount Percentage",
+            name: "dicountPercentage",
+            type: "number",
+            title: "Discount Percentage",
         },
         {
-            name:"isNew",
-            type:"boolean",
-            title:"New Badge",
+            name: "isNew",
+            type: "boolean",
+            title: "New Badge",
         },
         {
             name: 'category',
             title: 'Category',
-            type: 'string', // or 'array' if multiple categories are allowed
-            options: {
-              list: [
-                { title: 'Chair', value: 'chair' },
-                { title: 'Sofa', value: 'sofa' },
-                { title: 'Decoration', value: 'decoration' },
-                { title: 'All', value: 'all' },
-              ], 
-            },
-          },
+            type: 'reference',
+            to: [{ type: 'category' }],
+            validation: (rule) => rule.required(),
+        },
+        {
+            name: "sku",
+            title: "SKU",
+            type: "string",
+            description: "Stock Keeping Unit (Unique Identifier)",
+            validation: (rule) => rule.required(),
+        },
     ]
 })
