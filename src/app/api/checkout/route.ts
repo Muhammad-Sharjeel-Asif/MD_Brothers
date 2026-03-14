@@ -6,6 +6,20 @@ export async function POST(request: Request) {
         const body = await request.json()
         const { customer, items, totalPrice, paymentMethod } = body
 
+        let orderStatus = 'pending'
+        let paymentStatus = 'pending'
+
+        if (paymentMethod === 'Cash On Delivery') {
+            orderStatus = 'pending_payment'
+            paymentStatus = 'pending'
+        } else if (paymentMethod === 'Direct Bank Transfer') {
+            orderStatus = 'awaiting_bank_transfer'
+            paymentStatus = 'pending'
+        } else if (paymentMethod === 'JazzCash' || paymentMethod === 'Easypaisa') {
+            orderStatus = 'pending_payment'
+            paymentStatus = 'pending' // Actual confirmation would update this to completed
+        }
+
         // Create the order document in Sanity
         const order = await adminClient.create({
             _type: 'order',
@@ -21,7 +35,9 @@ export async function POST(request: Request) {
             })),
             totalPrice,
             paymentMethod,
-            status: 'pending',
+            paymentStatus,
+            transactionId: '',
+            status: orderStatus,
             orderDate: new Date().toISOString(),
         })
 

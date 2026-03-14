@@ -66,9 +66,28 @@ const CheckOutPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        alert("Order placed successfully!");
-        clearCart();
-        router.push('/');
+        if (paymentMethod === 'Credit / Debit Card') {
+          // Initiate Stripe Checkout
+          const stripeResponse = await fetch('/api/checkout/stripe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              items: cart,
+              orderId: data.orderId,
+            }),
+          });
+          const stripeData = await stripeResponse.json();
+          if (stripeData.url) {
+            window.location.href = stripeData.url;
+            return; // Exit here, handled by Stripe redirect
+          } else {
+            alert("Failed to initialize Stripe checkout.");
+          }
+        } else {
+          alert("Order placed successfully!");
+          clearCart();
+          router.push('/');
+        }
       } else {
         alert("Failed to place order: " + data.error);
       }
@@ -76,7 +95,9 @@ const CheckOutPage = () => {
       console.error(error);
       alert("An error occurred while placing your order.");
     } finally {
-      setIsSubmitting(false);
+      if (paymentMethod !== 'Credit / Debit Card') {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -316,23 +337,85 @@ const CheckOutPage = () => {
               </div>
             </div>
             <div className="border-b border-[#D9D9D9] w-full mt-6"></div>
-            <div className="mt-8">
-              <div
-                className="flex items-center gap-3 cursor-pointer"
-                onClick={() => setPaymentMethod('Direct Bank Transfer')}
-              >
-                <div className={`rounded-full w-[14px] h-[14px] ${paymentMethod === 'Direct Bank Transfer' ? 'bg-black' : 'border border-[#9F9F9F]'}`}></div>
-                <h1 className="text-[20px] font-semibold">Direct Bank Transfer</h1>
+            <div className="mt-8 space-y-4">
+              {/* Direct Bank Transfer */}
+              <div className="flex flex-col gap-2">
+                <div
+                  className="flex items-center gap-3 cursor-pointer"
+                  onClick={() => setPaymentMethod('Direct Bank Transfer')}
+                >
+                  <div className={`rounded-full flex-shrink-0 w-[14px] h-[14px] ${paymentMethod === 'Direct Bank Transfer' ? 'bg-black' : 'border border-[#9F9F9F]'}`}></div>
+                  <h1 className={`text-[18px] font-semibold ${paymentMethod === 'Direct Bank Transfer' ? 'text-black' : 'text-[#333333]'}`}>Direct Bank Transfer</h1>
+                </div>
+                {paymentMethod === 'Direct Bank Transfer' && (
+                  <p className="text-[#333333] pl-6 text-sm">
+                    Make your payment directly into our bank account. Please use your Order ID as the payment reference. Your order will not be shipped until the funds have cleared in our account.
+                  </p>
+                )}
               </div>
-              <p className="text-[#333333] mt-2">
-                Make your payment directly into our bank account. Please use your Order ID as the payment reference. Your order will not be shipped until the funds have cleared in our account.
-              </p>
-              <div
-                className="flex items-center gap-3 mt-6 cursor-pointer"
-                onClick={() => setPaymentMethod('Cash On Delivery')}
-              >
-                <div className={`rounded-full w-[14px] h-[14px] ${paymentMethod === 'Cash On Delivery' ? 'bg-black' : 'border border-[#9F9F9F]'}`}></div>
-                <h1 className="text-[18px] font-semibold text-[#333333]">Cash On Delivery</h1>
+
+              {/* Cash On Delivery */}
+              <div className="flex flex-col gap-2">
+                <div
+                  className="flex items-center gap-3 cursor-pointer"
+                  onClick={() => setPaymentMethod('Cash On Delivery')}
+                >
+                  <div className={`rounded-full flex-shrink-0 w-[14px] h-[14px] ${paymentMethod === 'Cash On Delivery' ? 'bg-black' : 'border border-[#9F9F9F]'}`}></div>
+                  <h1 className={`text-[18px] font-semibold ${paymentMethod === 'Cash On Delivery' ? 'text-black' : 'text-[#333333]'}`}>Cash On Delivery</h1>
+                </div>
+                {paymentMethod === 'Cash On Delivery' && (
+                  <p className="text-[#333333] pl-6 text-sm">
+                    Pay with cash upon delivery.
+                  </p>
+                )}
+              </div>
+
+              {/* JazzCash */}
+              <div className="flex flex-col gap-2">
+                <div
+                  className="flex items-center gap-3 cursor-pointer"
+                  onClick={() => setPaymentMethod('JazzCash')}
+                >
+                  <div className={`rounded-full flex-shrink-0 w-[14px] h-[14px] ${paymentMethod === 'JazzCash' ? 'bg-black' : 'border border-[#9F9F9F]'}`}></div>
+                  <h1 className={`text-[18px] font-semibold ${paymentMethod === 'JazzCash' ? 'text-black' : 'text-[#333333]'}`}>JazzCash</h1>
+                </div>
+                {paymentMethod === 'JazzCash' && (
+                  <p className="text-[#333333] pl-6 text-sm">
+                    Pay securely using your JazzCash mobile wallet.
+                  </p>
+                )}
+              </div>
+
+              {/* Easypaisa */}
+              <div className="flex flex-col gap-2">
+                <div
+                  className="flex items-center gap-3 cursor-pointer"
+                  onClick={() => setPaymentMethod('Easypaisa')}
+                >
+                  <div className={`rounded-full flex-shrink-0 w-[14px] h-[14px] ${paymentMethod === 'Easypaisa' ? 'bg-black' : 'border border-[#9F9F9F]'}`}></div>
+                  <h1 className={`text-[18px] font-semibold ${paymentMethod === 'Easypaisa' ? 'text-black' : 'text-[#333333]'}`}>Easypaisa</h1>
+                </div>
+                {paymentMethod === 'Easypaisa' && (
+                  <p className="text-[#333333] pl-6 text-sm">
+                    Pay securely using your Easypaisa mobile wallet.
+                  </p>
+                )}
+              </div>
+
+              {/* Credit / Debit Card */}
+              <div className="flex flex-col gap-2">
+                <div
+                  className="flex items-center gap-3 cursor-pointer"
+                  onClick={() => setPaymentMethod('Credit / Debit Card')}
+                >
+                  <div className={`rounded-full flex-shrink-0 w-[14px] h-[14px] ${paymentMethod === 'Credit / Debit Card' ? 'bg-black' : 'border border-[#9F9F9F]'}`}></div>
+                  <h1 className={`text-[18px] font-semibold ${paymentMethod === 'Credit / Debit Card' ? 'text-black' : 'text-[#333333]'}`}>Credit / Debit Card</h1>
+                </div>
+                {paymentMethod === 'Credit / Debit Card' && (
+                  <p className="text-[#333333] pl-6 text-sm">
+                    Pay securely using your Visa or Mastercard. You will be redirected to the secure payment gateway to complete your purchase.
+                  </p>
+                )}
               </div>
             </div>
             <div className="mt-10">

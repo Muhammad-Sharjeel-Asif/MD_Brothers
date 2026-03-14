@@ -46,6 +46,8 @@ export const order = defineType({
             options: {
                 list: [
                     { title: 'Pending', value: 'pending' },
+                    { title: 'Pending Payment', value: 'pending_payment' },
+                    { title: 'Awaiting Bank Transfer', value: 'awaiting_bank_transfer' },
                     { title: 'Paid', value: 'paid' },
                     { title: 'Shipped', value: 'shipped' },
                     { title: 'Delivered', value: 'delivered' },
@@ -59,6 +61,26 @@ export const order = defineType({
             name: 'paymentMethod',
             type: 'string',
             title: 'Payment Method',
+        },
+        {
+            name: 'paymentStatus',
+            type: 'string',
+            title: 'Payment Status',
+            options: {
+                list: [
+                    { title: 'Pending', value: 'pending' },
+                    { title: 'Completed', value: 'completed' },
+                    { title: 'Failed', value: 'failed' },
+                ],
+                layout: 'radio'
+            },
+            initialValue: 'pending'
+        },
+        {
+            name: 'transactionId',
+            type: 'string',
+            title: 'Transaction ID',
+            description: 'Transaction reference from the payment gateway (if applicable)',
         },
         {
             name: 'orderDate',
