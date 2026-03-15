@@ -29,6 +29,22 @@ const CheckOutPage = () => {
 
   const [paymentMethod, setPaymentMethod] = React.useState('Direct Bank Transfer');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [jazzCashPayload, setJazzCashPayload] = React.useState<Record<string, string> | null>(null);
+  const jazzCashFormRef = React.useRef<HTMLFormElement>(null);
+  const [easypaisaPayload, setEasypaisaPayload] = React.useState<Record<string, string> | null>(null);
+  const easypaisaFormRef = React.useRef<HTMLFormElement>(null);
+
+  React.useEffect(() => {
+    if (jazzCashPayload && jazzCashFormRef.current) {
+        jazzCashFormRef.current.submit();
+    }
+  }, [jazzCashPayload]);
+  
+  React.useEffect(() => {
+    if (easypaisaPayload && easypaisaFormRef.current) {
+        easypaisaFormRef.current.submit();
+    }
+  }, [easypaisaPayload]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -42,6 +58,9 @@ const CheckOutPage = () => {
     }
 
     setIsSubmitting(true);
+
+    // Generate unique idempotency key to prevent double checkout clicks or network retry duplicates
+    const idempotencyKey = crypto.randomUUID();
 
     try {
       const response = await fetch('/api/checkout', {
@@ -60,6 +79,7 @@ const CheckOutPage = () => {
           items: cart,
           totalPrice: cartTotal,
           paymentMethod: paymentMethod,
+          idempotencyKey: idempotencyKey,
         }),
       });
 
@@ -74,30 +94,71 @@ const CheckOutPage = () => {
             body: JSON.stringify({
               items: cart,
               orderId: data.orderId,
+              customerEmail: formData.email,
             }),
           });
           const stripeData = await stripeResponse.json();
           if (stripeData.url) {
             window.location.href = stripeData.url;
-            return; // Exit here, handled by Stripe redirect
+            return; // Exit here
           } else {
             alert("Failed to initialize Stripe checkout.");
+            setIsSubmitting(false);
           }
+        } else if (paymentMethod === 'JazzCash') {
+          // Initiate JazzCash
+          const jazzResponse = await fetch('/api/payment/jazzcash/initiate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              items: cart,
+              orderId: data.orderId,
+              customerData: formData,
+            }),
+          });
+          const jazzData = await jazzResponse.json();
+          if (jazzData.success && jazzData.payload) {
+             setJazzCashPayload(jazzData.payload);
+             return; // State update triggers form submission effect
+          } else {
+             alert('Failed to initialize JazzCash payment.');
+             setIsSubmitting(false);
+          }
+        } else if (paymentMethod === 'Easypaisa') {
+          // Initiate Easypaisa
+          const easypaisaResponse = await fetch('/api/payment/easypaisa/initiate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              items: cart,
+              orderId: data.orderId,
+            }),
+          });
+          const easypaisaData = await easypaisaResponse.json();
+          if (easypaisaData.success && easypaisaData.payload) {
+             setEasypaisaPayload(easypaisaData.payload);
+             return; // Trigger form submission 
+          } else {
+             alert('Failed to initialize Easypaisa payment.');
+             setIsSubmitting(false);
+          }
+        } else if (paymentMethod === 'Direct Bank Transfer') {
+          // Redirect to Custom Bank Details and Proof Submission logic
+          clearCart();
+          router.push(`/checkout/bank-transfer?order_id=${data.orderId}`);
         } else {
           alert("Order placed successfully!");
           clearCart();
-          router.push('/');
+          router.push(`/checkout/success?order_id=${data.orderId}`);
         }
       } else {
         alert("Failed to place order: " + data.error);
+        setIsSubmitting(false);
       }
     } catch (error) {
       console.error(error);
       alert("An error occurred while placing your order.");
-    } finally {
-      if (paymentMethod !== 'Credit / Debit Card') {
-        setIsSubmitting(false);
-      }
+      setIsSubmitting(false);
     }
   };
 
@@ -430,6 +491,35 @@ const CheckOutPage = () => {
           </div>
         </div>
       </div>
+
+      {jazzCashPayload && (
+        <form
+          ref={jazzCashFormRef}
+          // Defaulting to sandbox URL, switch to 'https://payments.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/' for production
+          action="https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/"
+          method="POST"
+          style={{ display: 'none' }}
+        >
+          {Object.entries(jazzCashPayload).map(([key, value]) => (
+            <input key={key} type="hidden" name={key} value={value as string} />
+          ))}
+        </form>
+      )}
+
+      {easypaisaPayload && (
+        <form
+          ref={easypaisaFormRef}
+          // Switch to EasyPaisa sandbox or live URL upon actual credentials. Normally: https://easypay.easypaisa.com.pk/easypay/Index.jsf
+          action="https://easypay.easypaisa.com.pk/easypay/Index.jsf"
+          method="POST"
+          style={{ display: 'none' }}
+        >
+          {Object.entries(easypaisaPayload).map(([key, value]) => (
+            <input key={key} type="hidden" name={key} value={value as string} />
+          ))}
+        </form>
+      )}
+
       <Feature />
     </>
   );

@@ -48,9 +48,12 @@ export const order = defineType({
                     { title: 'Pending', value: 'pending' },
                     { title: 'Pending Payment', value: 'pending_payment' },
                     { title: 'Awaiting Bank Transfer', value: 'awaiting_bank_transfer' },
+                    { title: 'Processing', value: 'processing' },
                     { title: 'Paid', value: 'paid' },
                     { title: 'Shipped', value: 'shipped' },
+                    { title: 'Dispatched', value: 'dispatched' },
                     { title: 'Delivered', value: 'delivered' },
+                    { title: 'Completed', value: 'completed' },
                     { title: 'Cancelled', value: 'cancelled' },
                 ],
                 layout: 'radio'
@@ -83,9 +86,51 @@ export const order = defineType({
             description: 'Transaction reference from the payment gateway (if applicable)',
         },
         {
+            name: 'gateway',
+            type: 'string',
+            title: 'Payment Gateway Used',
+            description: 'The specific payment integration processing this order (e.g. Stripe, JazzCash)',
+        },
+        {
+            name: 'paymentTimestamp',
+            type: 'datetime',
+            title: 'Payment Processing Timestamp',
+        },
+        {
+            name: 'stripeSessionId',
+            type: 'string',
+            title: 'Stripe Session ID',
+            description: 'Stripe checkout session ID',
+        },
+        {
+            name: 'proofImage',
+            type: 'image',
+            title: 'Payment Proof Image',
+            description: 'Screenshot of the bank transfer payment proof',
+            options: {
+                hotspot: true,
+            }
+        },
+        {
+            name: 'deliveryConfirmedAt',
+            type: 'datetime',
+            title: 'Delivery Confirmed At',
+        },
+        {
+            name: 'deliveryAgent',
+            type: 'string',
+            title: 'Delivery Agent / Rider',
+        },
+        {
             name: 'orderDate',
             type: 'datetime',
             title: 'Order Date',
+            initialValue: () => new Date().toISOString()
+        },
+        {
+            name: 'createdAt',
+            type: 'datetime',
+            title: 'Created At',
             initialValue: () => new Date().toISOString()
         }
     ]

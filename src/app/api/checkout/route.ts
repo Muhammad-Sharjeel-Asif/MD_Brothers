@@ -4,7 +4,18 @@ import { adminClient } from '@/sanity/lib/adminClient'
 export async function POST(request: Request) {
     try {
         const body = await request.json()
-        const { customer, items, totalPrice, paymentMethod } = body
+        const { customer, items, totalPrice, paymentMethod, idempotencyKey } = body
+
+        if (!idempotencyKey) {
+             return NextResponse.json({ success: false, error: 'Idempotency Key required' }, { status: 400 });
+        }
+
+        // Idempotency execution: Ensure we aren't creating duplicate orders
+        const existingOrder = await adminClient.fetch(`*[_type == "order" && idempotencyKey == $idempotencyKey][0]`, { idempotencyKey });
+        if (existingOrder) {
+             console.log(`Idempotency check intercepted existing order initialization duplicate: ${existingOrder._id}`);
+             return NextResponse.json({ success: true, orderId: existingOrder._id });
+        }
 
         let orderStatus = 'pending'
         let paymentStatus = 'pending'
@@ -39,6 +50,7 @@ export async function POST(request: Request) {
             transactionId: '',
             status: orderStatus,
             orderDate: new Date().toISOString(),
+            idempotencyKey,
         })
 
         return NextResponse.json({ success: true, orderId: order._id })
