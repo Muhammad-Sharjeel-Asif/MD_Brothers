@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import sanityClient from "@sanity/client";
+import { client } from "@/sanity/lib/client";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -11,12 +11,7 @@ import {
 } from "@/lib/fuzzySearch";
 import { useCartContext } from "@/context/CartContext";
 
-const client = sanityClient({
-  projectId: "2srh4ekv",
-  dataset: "productions",
-  token: "skz6lWFJkAgpfrjXgwK8Tb6UBsTpRcSwzsQawON5Qps118XQdODrtVLdyXySTgJqC7rhPUKAOzb9prGs2aORcV0IICFN6pLKCLW2G0P7u5rExc8E92fzYp0UMuro6VpCzm51svtpWMCniHWaEiZAeJApDrYyIXgO5Uar4GLM2QPxFsswwZnU",
-  useCdn: true,
-});
+
 
 // ─── Debounce hook ───────────────────────────────────────────────────────────
 

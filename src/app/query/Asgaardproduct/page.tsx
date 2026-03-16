@@ -1,16 +1,11 @@
 "use client"
 import React from 'react';
-import sanityClient  from '@sanity/client';
+import { client as sanity } from "@/sanity/lib/client";
 import Image from 'next/image';
 
 
 
-const sanity = sanityClient({
-    projectId: '2srh4ekv',
-    dataset: 'productions',
-    token: 'skz6lWFJkAgpfrjXgwK8Tb6UBsTpRcSwzsQawON5Qps118XQdODrtVLdyXySTgJqC7rhPUKAOzb9prGs2aORcV0IICFN6pLKCLW2G0P7u5rExc8E92fzYp0UMuro6VpCzm51svtpWMCniHWaEiZAeJApDrYyIXgO5Uar4GLM2QPxFsswwZnU',
-    useCdn: true,
-});
+
 
 interface project {
     _id: string;
