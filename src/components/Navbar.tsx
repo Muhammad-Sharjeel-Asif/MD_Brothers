@@ -387,7 +387,7 @@ const Navbar = () => {
 
         {/* Cart Sidebar */}
         <div
-          className={`fixed top-0 right-0 w-full sm:w-96 h-full bg-white shadow-lg z-50 flex flex-col will-change-transform transition-transform duration-250 ease-[cubic-bezier(0.4,0,0.2,1)] ${cartOpen ? "translate-x-0" : "translate-x-full"
+          className={`fixed top-0 right-0 w-full sm:w-96 h-full bg-white shadow-lg z-50 flex flex-col will-change-transform transition-transform duration-250 ease-in-out ${cartOpen ? "translate-x-0" : "translate-x-full"
             }`}
         >
           {/* Cart Header */}
