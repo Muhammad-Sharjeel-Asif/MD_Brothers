@@ -3,6 +3,8 @@ import crypto from 'crypto';
 import Stripe from 'stripe';
 import { adminClient } from '@/sanity/lib/adminClient';
 
+export const dynamic = "force-dynamic";
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
