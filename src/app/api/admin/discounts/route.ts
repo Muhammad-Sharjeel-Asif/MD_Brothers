@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminClient } from "@/sanity/lib/adminClient";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const discounts = await adminClient.fetch(`*[_type == "discount"] | order(_createdAt desc) {

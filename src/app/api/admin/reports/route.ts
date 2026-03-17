@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/sanity/lib/adminClient";
 
+export const dynamic = "force-dynamic";
+
 interface OrderItem {
   productId: string;
   productTitle: string;
