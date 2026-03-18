@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
 import { adminClient } from '@/sanity/lib/adminClient'
+import { auth } from '@clerk/nextjs/server'
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
     try {
+        const { userId } = await auth();
         const body = await request.json()
         const { customer, items, totalPrice, paymentMethod, idempotencyKey } = body
 
@@ -36,6 +38,7 @@ export async function POST(request: Request) {
         // Create the order document in Sanity
         const order = await adminClient.create({
             _type: 'order',
+            clerkUserId: userId || '',
             customer,
             items: items.map((item: any) => ({
                 _key: Math.random().toString(36).substring(2, 9),

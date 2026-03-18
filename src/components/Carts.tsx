@@ -124,7 +124,7 @@ const Carts: React.FC = () => {
                 <p className="text-sm text-gray-600 text-center">
                   Please sign in to proceed with checkout
                 </p>
-                <SignInButton mode="modal">
+                <SignInButton mode="modal" forceRedirectUrl="/checkout">
                   <button className="w-full lg:w-auto px-6 py-3 bg-[#B88E2F] hover:bg-[#a37d2a] text-white rounded-2xl text-sm lg:text-base font-medium transition">
                     Sign In to Checkout
                   </button>

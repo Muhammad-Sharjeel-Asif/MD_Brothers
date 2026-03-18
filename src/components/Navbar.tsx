@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCartContext } from "@/context/CartContext";
-import { ClerkLoaded, SignInButton, useUser } from "@clerk/nextjs";
+import { ClerkLoaded, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
 const Navbar = () => {
@@ -123,7 +123,7 @@ const Navbar = () => {
         </Link>
       </div>
 
-      {/* Actions (Cart, Search, Favorites) */}
+      {/* Actions (Cart, Search, Favorites, Auth) */}
       <div className="hidden sm:flex items-center space-x-4">
         {/* Search Bar */}
         <form onSubmit={handleSearch} className="relative group">
@@ -180,6 +180,23 @@ const Navbar = () => {
             </span>
           )}
         </div>
+
+        {/* Auth: UserButton or SignIn */}
+        <ClerkLoaded>
+          {user ? (
+            <UserButton afterSignOutUrl="/">
+              <UserButton.MenuItems>
+                <UserButton.Link label="My Orders" labelIcon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>} href="/my-orders" />
+              </UserButton.MenuItems>
+            </UserButton>
+          ) : (
+            <SignInButton mode="modal">
+              <button className="px-4 py-2 bg-[#B88E2F] hover:bg-[#a37d2a] text-white text-sm font-medium rounded-lg transition-colors">
+                Sign In
+              </button>
+            </SignInButton>
+          )}
+        </ClerkLoaded>
       </div>
 
       {/* Mobile Menu Icon */}
@@ -272,14 +289,22 @@ const Navbar = () => {
         <div className="px-6 py-4 bg-[#F9F1E7] border-b border-gray-200">
           <ClerkLoaded>
             {user ? (
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-[#B88E2F] rounded-full flex items-center justify-center text-white font-bold text-lg">
-                  {user.firstName?.charAt(0) || user.emailAddresses[0]?.emailAddress.charAt(0).toUpperCase()}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <UserButton afterSignOutUrl="/" />
+                  <div>
+                    <p className="font-semibold text-gray-900">Welcome back!</p>
+                    <p className="text-sm text-gray-600">{user.firstName || user.emailAddresses[0]?.emailAddress.split('@')[0]}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-900">Welcome back!</p>
-                  <p className="text-sm text-gray-600">{user.firstName || user.emailAddresses[0]?.emailAddress.split('@')[0]}</p>
-                </div>
+                <Link
+                  href="/my-orders"
+                  onClick={toggleMenu}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white hover:bg-[#B88E2F]/10 transition-colors text-sm font-medium text-gray-700"
+                >
+                  <svg className="w-5 h-5 text-[#B88E2F]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                  My Orders
+                </Link>
               </div>
             ) : (
               <div className="flex items-center justify-between">
@@ -515,7 +540,7 @@ const Navbar = () => {
                   Proceed to Checkout
                 </Link>
               ) : (
-                <SignInButton mode="modal">
+                <SignInButton mode="modal" forceRedirectUrl="/cart">
                   <button className="w-full bg-[#B88E2F] hover:bg-[#a37d2a] text-white font-bold py-2.5 px-4 rounded-lg transition-colors">
                     Sign In to Checkout
                   </button>

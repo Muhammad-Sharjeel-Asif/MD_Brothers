@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 
 interface CartItem {
   _id: string;
@@ -24,17 +24,27 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
-
-  // Persist cart in localStorage
-  useEffect(() => {
-    const storedCart = localStorage.getItem("cart");
-    if (storedCart) {
-      setCart(JSON.parse(storedCart));
+  // Lazy initializer — reads localStorage synchronously on first render,
+  // preventing the race condition where an empty [] overwrites stored data.
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const storedCart = localStorage.getItem("cart");
+      return storedCart ? JSON.parse(storedCart) : [];
+    } catch {
+      return [];
     }
-  }, []);
+  });
+
+  // Track whether we've completed initial hydration to avoid
+  // writing the SSR default ([]) back to localStorage.
+  const isInitialized = useRef(false);
 
   useEffect(() => {
+    if (!isInitialized.current) {
+      isInitialized.current = true;
+      return;
+    }
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 

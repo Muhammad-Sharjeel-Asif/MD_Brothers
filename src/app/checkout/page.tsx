@@ -214,161 +214,177 @@ const CheckOutPage = () => {
         <div className="flex flex-col lg:flex-row items-start justify-between gap-10">
           {/* Left Side: Billing Form */}
           <div className="w-full lg:w-[60%]">
-            <h1 className="text-[36px] font-semibold mb-5">Billing details</h1>
-            <div className="flex flex-wrap items-center justify-start gap-6">
-              <div className="w-full sm:w-auto">
-                <label>
-                  First Name
-                  <br />
+            <h1 className="text-xl font-semibold mb-6">Billing Details</h1>
+
+            {/* Contact Information */}
+            <div className="mb-6">
+              <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3 pb-2 border-b border-gray-100">
+                Contact Information
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                    First Name <span className="text-red-500">*</span>
+                  </label>
                   <input
+                    id="firstName"
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
                     type="text"
-                    className="w-full sm:w-[211px] h-[75px] border border-black rounded-md mt-2 px-4"
+                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
                   />
-                </label>
-              </div>
-              <div className="w-full sm:w-auto">
-                <label>
-                  Last Name
-                  <br />
+                </div>
+                <div>
+                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Last Name
+                  </label>
                   <input
+                    id="lastName"
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleInputChange}
                     type="text"
-                    className="w-full sm:w-[211px] h-[75px] border border-black rounded-md mt-2 px-4"
+                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
                   />
-                </label>
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    type="email"
+                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    type="tel"
+                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Company Name <span className="text-gray-400 font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    id="companyName"
+                    name="companyName"
+                    value={formData.companyName}
+                    onChange={handleInputChange}
+                    type="text"
+                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
+                  />
+                </div>
               </div>
             </div>
 
-            <br />
-            Company Name (Optional)
-            <br />
-            <br />
-            <input
-              name="companyName"
-              value={formData.companyName}
-              onChange={handleInputChange}
-              type="text"
-              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md px-4"
-            />
-            <br />
-            <br />
-            Country / Region
-            <br />
-            <br />
-            <div className="relative w-full lg:w-[453px] h-[75px]">
-              <input
-                name="country"
-                value={formData.country}
-                onChange={handleInputChange}
-                type="text"
-                className="w-full h-full border border-black rounded-md pl-4 pr-10"
-              />
-              <Image
-                src={"/images/arr-ico.png"}
-                alt="arrow-icon"
-                width={20}
-                height={20}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2"
-              />
+            {/* Delivery Details */}
+            <div className="mb-6">
+              <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3 pb-2 border-b border-gray-100">
+                Delivery Details
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label htmlFor="streetAddress" className="block text-sm font-medium text-gray-700 mb-1">
+                    Street Address <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="streetAddress"
+                    name="streetAddress"
+                    value={formData.streetAddress}
+                    onChange={handleInputChange}
+                    type="text"
+                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                    Town / City
+                  </label>
+                  <input
+                    id="city"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    type="text"
+                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="province" className="block text-sm font-medium text-gray-700 mb-1">
+                    Province
+                  </label>
+                  <input
+                    id="province"
+                    name="province"
+                    value={formData.province}
+                    onChange={handleInputChange}
+                    placeholder="Western Province"
+                    type="text"
+                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
+                    Country / Region
+                  </label>
+                  <input
+                    id="country"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleInputChange}
+                    type="text"
+                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
+                    ZIP Code
+                  </label>
+                  <input
+                    id="zipCode"
+                    name="zipCode"
+                    value={formData.zipCode}
+                    onChange={handleInputChange}
+                    type="text"
+                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
+                  />
+                </div>
+              </div>
             </div>
-            <br />
-            Street address
-            <br />
-            <br />
-            <input
-              name="streetAddress"
-              value={formData.streetAddress}
-              onChange={handleInputChange}
-              type="text"
-              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md px-4"
-            />
-            <br />
-            <br />
-            Town / City
-            <br />
-            <br />
-            <input
-              name="city"
-              value={formData.city}
-              onChange={handleInputChange}
-              type="text"
-              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md px-4"
-            />
-            <br />
-            <br />
-            Province
-            <br />
-            <br />
-            <div className="relative w-full lg:w-[453px] h-[75px]">
-              <input
-                name="province"
-                value={formData.province}
-                onChange={handleInputChange}
-                placeholder="Western Province"
-                type="text"
-                className="w-full h-full border border-black rounded-md pl-4 pr-10 text-[#333333]"
-              />
-              <Image
-                src={"/images/arr-ico.png"}
-                alt="arrow-icon"
-                width={20}
-                height={20}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2"
-              />
+
+            {/* Additional Info */}
+            <div>
+              <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3 pb-2 border-b border-gray-100">
+                Additional Information
+              </h2>
+              <div>
+                <label htmlFor="additionalInfo" className="block text-sm font-medium text-gray-700 mb-1">
+                  Order Notes <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
+                <input
+                  id="additionalInfo"
+                  name="additionalInfo"
+                  value={formData.additionalInfo}
+                  onChange={handleInputChange}
+                  placeholder="Notes about your order, e.g. special delivery instructions"
+                  type="text"
+                  className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
+                />
+              </div>
             </div>
-            <br />
-            ZIP code
-            <br />
-            <br />
-            <input
-              name="zipCode"
-              value={formData.zipCode}
-              onChange={handleInputChange}
-              type="text"
-              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md px-4"
-            />
-            <br />
-            <br />
-            Phone
-            <br />
-            <br />
-            <input
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              type="text"
-              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md px-4"
-            />
-            <br />
-            <br />
-            Email address
-            <br />
-            <br />
-            <input
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              type="text"
-              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md px-4"
-            />
-            <br />
-            <br />
-            Additional information
-            <br />
-            <br />
-            <input
-              name="additionalInfo"
-              value={formData.additionalInfo}
-              onChange={handleInputChange}
-              placeholder="Additional information"
-              type="text"
-              className="w-full lg:w-[453px] h-[75px] border border-black rounded-md text-[#333333] pl-4"
-            />
           </div>
 
           {/* Right Side: Order Summary */}

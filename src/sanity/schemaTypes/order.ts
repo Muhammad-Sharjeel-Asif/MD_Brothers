@@ -20,6 +20,12 @@ export const order = defineType({
             ]
         },
         {
+            name: 'clerkUserId',
+            type: 'string',
+            title: 'User ID',
+            description: 'Clerk user ID for order tracking',
+        },
+        {
             name: 'items',
             type: 'array',
             title: 'Order Items',
