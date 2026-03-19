@@ -24,23 +24,26 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  // Lazy initializer — reads localStorage synchronously on first render,
-  // preventing the race condition where an empty [] overwrites stored data.
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const storedCart = localStorage.getItem("cart");
-      return storedCart ? JSON.parse(storedCart) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // Track whether we've completed initial hydration to avoid
-  // writing the SSR default ([]) back to localStorage.
+  // Fix Hydration mismatch: during SSR, window is undefined, so we must return empty array.
+  // On the very first client render, it MUST also return empty array to match the server.
+  // We then use `useEffect` to safely hydrate from `localStorage`.
+  const [cart, setCart] = useState<CartItem[]>([]);
   const isInitialized = useRef(false);
 
   useEffect(() => {
+    // Client-side hydration on mount
+    try {
+      const storedCart = localStorage.getItem("cart");
+      if (storedCart) {
+        setCart(JSON.parse(storedCart));
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }, []);
+
+  useEffect(() => {
+    // Only save to localStorage after we have hydrated
     if (!isInitialized.current) {
       isInitialized.current = true;
       return;

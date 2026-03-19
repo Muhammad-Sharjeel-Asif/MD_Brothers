@@ -121,7 +121,7 @@ const Homeproducts: React.FC = () => {
             </div>
 
             <div className="flex flex-wrap gap-2 mt-3">
-              {product.tags.map((tag, index) => (
+              {product.tags?.map((tag, index) => (
                 <span
                   key={index}
                   className="text-xs bg-slate-300 line-clamp-1 text-black rounded-full px-3 py-1 whitespace-nowrap"
