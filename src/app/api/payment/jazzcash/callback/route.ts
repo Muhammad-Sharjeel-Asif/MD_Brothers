@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { adminClient } from '@/sanity/lib/adminClient';
+import { getEnv } from '@/lib/env';
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +14,8 @@ export async function POST(request: Request) {
             payload[key] = value.toString();
         });
 
-        const integritySalt = process.env.JAZZCASH_INTEGERITY_SALT || '';
-        const merchantId = process.env.JAZZCASH_MERCHANT_ID || '';
+        const integritySalt = getEnv('JAZZCASH_INTEGERITY_SALT');
+        const merchantId = getEnv('JAZZCASH_MERCHANT_ID');
 
         // Validate basic configuration
         if (!integritySalt) {

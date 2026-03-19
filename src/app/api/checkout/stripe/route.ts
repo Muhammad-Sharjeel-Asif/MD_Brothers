@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { adminClient } from '@/sanity/lib/adminClient';
+import { getEnv } from '@/lib/env';
 
 export const dynamic = "force-dynamic";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-    apiVersion: '2025-01-27.acacia' as any,
-});
-
 export async function POST(request: Request) {
     try {
+        const stripeKey = getEnv('STRIPE_SECRET_KEY');
+        if (!stripeKey) {
+            console.error("Stripe Secret Key is missing.");
+            return NextResponse.json({ success: false, error: "Payment service unavailable" }, { status: 503 });
+        }
+        const stripe = new Stripe(stripeKey, {
+            apiVersion: '2025-01-27.acacia' as any,
+        });
+
         const body = await request.json();
         const { items, orderId, customerEmail } = body;
 

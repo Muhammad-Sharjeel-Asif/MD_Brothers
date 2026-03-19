@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { adminClient } from '@/sanity/lib/adminClient';
+import { getEnv } from '@/lib/env';
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +28,15 @@ export async function POST(request: Request) {
         // Here we format to 1 decimal place standard "amount.0"
         const amount = totalAmount.toFixed(1);
 
-        const storeId = process.env.EASYPAISA_STORE_ID || '';
-        const hashKey = process.env.EASYPAISA_HASH_KEY || ''; // Usually 16, 24, or 32 bytes for AES
-        const returnUrl = process.env.EASYPAISA_RETURN_URL || `${request.headers.get('origin')}/api/payment/easypaisa/callback`;
+        const storeId = getEnv('EASYPAISA_STORE_ID');
+        const hashKey = getEnv('EASYPAISA_HASH_KEY'); // Usually 16, 24, or 32 bytes for AES
+        const returnUrl = getEnv('EASYPAISA_RETURN_URL', `${request.headers.get('origin')}/api/payment/easypaisa/callback`);
+
+        if (!storeId || !hashKey) {
+            console.error("Easypaisa configuration is missing.");
+            return NextResponse.json({ success: false, error: "Payment service unavailable" }, { status: 503 });
+        }
+
 
         // Generate Transaction Reference (Must be unique, typically 6-16 digits/chars)
         const date = new Date();

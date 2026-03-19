@@ -10,8 +10,16 @@ export async function GET() {
 
     if (!userId) {
       return NextResponse.json(
-        { error: "Authentication required" },
+        { success: false, error: "Authentication required" },
         { status: 401 }
+      );
+    }
+
+    if (!adminClient.config().projectId || !adminClient.config().dataset) {
+      console.error("Sanity client is missing projectId or dataset configuration.");
+      return NextResponse.json(
+        { success: false, error: "Service configuration error. Please try again later." },
+        { status: 503 }
       );
     }
 
@@ -36,11 +44,11 @@ export async function GET() {
       { userId }
     );
 
-    return NextResponse.json(orders);
-  } catch (error) {
-    console.error("Failed to fetch user orders:", error);
+    return NextResponse.json({ success: true, orders });
+  } catch (error: any) {
+    console.error("Failed to fetch user orders:", error.message || error);
     return NextResponse.json(
-      { error: "Failed to fetch orders" },
+      { success: false, error: "Failed to fetch orders" },
       { status: 500 }
     );
   }

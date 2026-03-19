@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { adminClient } from '@/sanity/lib/adminClient';
+import { getEnv } from '@/lib/env';
 
 export const dynamic = "force-dynamic";
 
@@ -27,10 +28,15 @@ export async function POST(request: Request) {
         // Standard is typically rupees * 100 for decimals
         const amount = Math.round(totalAmount * 100).toString();
 
-        const merchantId = process.env.JAZZCASH_MERCHANT_ID || '';
-        const password = process.env.JAZZCASH_PASSWORD || '';
-        const integritySalt = process.env.JAZZCASH_INTEGERITY_SALT || '';
-        const returnUrl = process.env.JAZZCASH_RETURN_URL || `${request.headers.get('origin')}/api/payment/jazzcash/callback`;
+        const merchantId = getEnv('JAZZCASH_MERCHANT_ID');
+        const password = getEnv('JAZZCASH_PASSWORD');
+        const integritySalt = getEnv('JAZZCASH_INTEGERITY_SALT');
+        const returnUrl = getEnv('JAZZCASH_RETURN_URL', `${request.headers.get('origin')}/api/payment/jazzcash/callback`);
+
+        if (!merchantId || !password || !integritySalt) {
+            console.error("Jazzcash configuration is missing.");
+            return NextResponse.json({ success: false, error: "Payment service unavailable" }, { status: 503 });
+        }
 
         // Generate Transaction Reference (Must be unique)
         const date = new Date();

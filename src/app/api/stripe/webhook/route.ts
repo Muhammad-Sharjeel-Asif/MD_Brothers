@@ -2,14 +2,21 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import Stripe from 'stripe';
 import { adminClient } from '@/sanity/lib/adminClient';
+import { getEnv } from '@/lib/env';
 
 export const dynamic = "force-dynamic";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
-
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
-
 export async function POST(req: Request) {
+    const stripeKey = getEnv('STRIPE_SECRET_KEY');
+    const endpointSecret = getEnv('STRIPE_WEBHOOK_SECRET');
+
+    if (!stripeKey) {
+        console.error("Stripe Secret Key is missing in webhook handler.");
+        return NextResponse.json({ error: "Configuration Error" }, { status: 503 });
+    }
+
+    const stripe = new Stripe(stripeKey);
+
     const body = await req.text();
     const sig = req.headers.get('stripe-signature') as string;
 

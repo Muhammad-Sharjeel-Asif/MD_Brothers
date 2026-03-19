@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { adminClient } from '@/sanity/lib/adminClient';
+import { getEnv } from '@/lib/env';
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,12 @@ export async function POST(request: Request) {
             payload[key] = value.toString();
         });
 
-        const storeId = process.env.EASYPAISA_STORE_ID || '';
+        const storeId = getEnv('EASYPAISA_STORE_ID');
+        
+        if (!storeId) {
+             console.error('Easypaisa configuration is missing. Failing callback.');
+             return NextResponse.redirect(`${new URL(request.url).origin}/checkout/success?status=error&message=ServerConfigurationError`, 302);
+        }
         const orderId = payload['orderRefNum'] || payload['orderId']; // Sometimes returned explicitly or mapped
         const transactionId = payload['transactionId'];
         const responseCode = payload['responseCode'];
