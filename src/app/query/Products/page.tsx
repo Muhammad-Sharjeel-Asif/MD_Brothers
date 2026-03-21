@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { client as sanity } from "@/sanity/lib/client";
+import { fetchSanityData } from "@/app/actions/sanity";
 import Image from "next/image";
 import { useCartContext } from "@/context/CartContext";
 import Link from "next/link";
@@ -29,6 +29,7 @@ const ProductCards: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   // Filter state
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -59,7 +60,14 @@ const ProductCards: React.FC = () => {
           "slug": slug.current,
           _createdAt
         }`;
-        const data: Product[] = await sanity.fetch(query);
+        
+        const data: Product[] | null = await fetchSanityData(query);
+
+        if (!data) {
+          setError(true);
+          setLoading(false);
+          return;
+        }
 
         const allCategories = Array.from(
           new Set(data.map((p) => p.categoryName).filter(Boolean))
@@ -74,6 +82,7 @@ const ProductCards: React.FC = () => {
         setProducts(data);
       } catch (error) {
         console.error("Error fetching products:", error);
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -156,6 +165,15 @@ const ProductCards: React.FC = () => {
     return (
       <div className="flex items-center justify-center py-24">
         <div className="w-10 h-10 border-4 border-[#B88E2F] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Products unavailable</h2>
+        <p className="text-gray-600">We are currently experiencing issues connecting to our catalog. Please try again later.</p>
       </div>
     );
   }

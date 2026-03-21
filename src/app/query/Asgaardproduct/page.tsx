@@ -1,6 +1,6 @@
 "use client"
 import React from 'react';
-import { client as sanity } from "@/sanity/lib/client";
+import { fetchSanityData } from "@/app/actions/sanity";
 import Image from 'next/image';
 
 
@@ -25,6 +25,7 @@ interface project {
 const Asgaardproduct: React.FC = () => {
     const [products, setProducts] = React.useState<project[]>([]);
     const [cart, setCart] = React.useState<project[]>([]);
+    const [error, setError] = React.useState(false);
 
     const fetchProducts = async () => {
         try {
@@ -38,10 +39,15 @@ const Asgaardproduct: React.FC = () => {
                 tags
             }`;
 
-            const data = await sanity.fetch(query);
+            const data = await fetchSanityData(query);
+            if (!data) {
+                setError(true);
+                return;
+            }
             setProducts(data);
         } catch (error) {
             console.error("Error fetching products:", error);
+            setError(true);
         }
     };
 
@@ -55,6 +61,15 @@ const Asgaardproduct: React.FC = () => {
     }, []);
 
 
+
+    if (error) {
+        return (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Products unavailable</h2>
+            <p className="text-gray-600">We are currently experiencing issues connecting to our catalog. Please try again later.</p>
+          </div>
+        );
+    }
 
    return(
     <div className='p-4'>

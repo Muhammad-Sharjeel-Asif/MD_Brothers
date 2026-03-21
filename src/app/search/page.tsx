@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { client } from "@/sanity/lib/client";
+import { fetchSanityData } from "@/app/actions/sanity";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -198,7 +198,11 @@ const ProductSearch = () => {
           "categoryName": category->name,
           "sku": coalesce(sku, "")
         }`;
-        const data: SearchableProduct[] = await client.fetch(query);
+        const data: SearchableProduct[] | null = await fetchSanityData(query);
+        if (!data) {
+          setAllProducts([]);
+          return;
+        }
         setAllProducts(data);
       } catch (err) {
         console.error("Error fetching products:", err);

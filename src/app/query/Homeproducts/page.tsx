@@ -1,6 +1,6 @@
 "use client"
 import React, { useState } from 'react';
-import { client as sanity } from "@/sanity/lib/client";
+import { fetchSanityData } from "@/app/actions/sanity";
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCartContext } from "@/context/CartContext";
@@ -29,6 +29,7 @@ const Homeproducts: React.FC = () => {
   const [cart, setCart] = React.useState<project[]>([]);
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set());
   const [addingItems, setAddingItems] = useState<Set<string>>(new Set());
+  const [error, setError] = useState(false);
   const { addToCart } = useCartContext();
 
   const fetchProducts = async () => {
@@ -44,10 +45,15 @@ const Homeproducts: React.FC = () => {
         "categoryName": category->name
       }`;
 
-      const data = await sanity.fetch(query);
+      const data = await fetchSanityData(query);
+      if (!data) {
+        setError(true);
+        return;
+      }
       setProducts(data);
     } catch (error) {
       console.error("Error fetching products:", error);
+      setError(true);
     }
   };
 
@@ -78,6 +84,15 @@ const Homeproducts: React.FC = () => {
       }, 2000);
     }, 400);
   };
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Products unavailable</h2>
+        <p className="text-gray-600">We are currently experiencing issues connecting to our catalog. Please try again later.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4">

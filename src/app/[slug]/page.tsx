@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { client } from '../../sanity/lib/client';
+import { fetchSanityData } from "@/app/actions/sanity";
 import Asgaardproduct from '../query/Asgaardproduct/page';
 import { useCartContext } from "@/context/CartContext";
 
@@ -42,7 +42,7 @@ export default function Page({ params: { slug } }: PageProps) {
         description,
         "imageUrl": productImage.asset->url,
       }[0]`;
-      const fetchedProduct: Product | null = await client.fetch(query);
+      const fetchedProduct: Product | null = await fetchSanityData(query);
       setProduct(fetchedProduct);
       setLoading(false);
     };
