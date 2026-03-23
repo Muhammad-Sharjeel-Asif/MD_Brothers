@@ -16,16 +16,33 @@ const CheckOutPage = () => {
   const [formData, setFormData] = React.useState({
     firstName: '',
     lastName: '',
-    companyName: '',
     country: 'Pakistan',
     streetAddress: '',
     city: '',
-    province: 'Western Province',
+    province: 'Punjab',
     zipCode: '',
     phone: '',
     email: '',
-    additionalInfo: ''
   });
+
+  const PAKISTANI_PROVINCES = [
+    "Punjab",
+    "Sindh",
+    "Khyber Pakhtunkhwa",
+    "Balochistan",
+    "Islamabad Capital Territory",
+    "Azad Kashmir",
+    "Gilgit-Baltistan"
+  ];
+
+  const PAKISTANI_CITIES = [
+    "Karachi", "Lahore", "Faisalabad", "Rawalpindi", "Gujranwala", "Peshawar", "Multan", "Hyderabad",
+    "Islamabad", "Quetta", "Bahawalpur", "Sargodha", "Sialkot", "Sukkur", "Larkana", "Sheikhupura",
+    "Rahim Yar Khan", "Jhang", "Dera Ghazi Khan", "Gujrat", "Sahiwal", "Wah Cantonment", "Mardan",
+    "Kasur", "Okara", "Mingora", "Nawabshah", "Chiniot", "Kotri", "Kāmoke", "Hafizabad", "Sadiqabad",
+    "Mirpur Khas", "Burewala", "Kohat", "Khanewal", "Muzaffargarh", "Abbottabad", "Muridke", "Jhelum",
+    "Shikarpur", "Jacobabad", "Muzaffarabad"
+  ].sort();
 
   const [paymentMethod, setPaymentMethod] = React.useState('Direct Bank Transfer');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -46,13 +63,13 @@ const CheckOutPage = () => {
     }
   }, [easypaisaPayload]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handlePlaceOrder = async () => {
-    if (!formData.firstName || !formData.email || !formData.phone || !formData.streetAddress) {
+    if (!formData.firstName || !formData.email || !formData.phone || !formData.streetAddress || !formData.city || !formData.province) {
       alert("Please fill in all required fields.");
       return;
     }
@@ -274,19 +291,6 @@ const CheckOutPage = () => {
                     className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
                   />
                 </div>
-                <div className="sm:col-span-2">
-                  <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Company Name <span className="text-gray-400 font-normal">(Optional)</span>
-                  </label>
-                  <input
-                    id="companyName"
-                    name="companyName"
-                    value={formData.companyName}
-                    onChange={handleInputChange}
-                    type="text"
-                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
-                  />
-                </div>
               </div>
             </div>
 
@@ -311,30 +315,36 @@ const CheckOutPage = () => {
                 </div>
                 <div>
                   <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                    Town / City
+                    Town / City <span className="text-red-500">*</span>
                   </label>
-                  <input
+                  <select
                     id="city"
                     name="city"
                     value={formData.city}
                     onChange={handleInputChange}
-                    type="text"
-                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
-                  />
+                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition bg-white"
+                  >
+                    <option value="">Select City</option>
+                    {PAKISTANI_CITIES.map(city => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label htmlFor="province" className="block text-sm font-medium text-gray-700 mb-1">
-                    Province
+                    Province <span className="text-red-500">*</span>
                   </label>
-                  <input
+                  <select
                     id="province"
                     name="province"
                     value={formData.province}
                     onChange={handleInputChange}
-                    placeholder="Western Province"
-                    type="text"
-                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
-                  />
+                    className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition bg-white"
+                  >
+                    {PAKISTANI_PROVINCES.map(province => (
+                      <option key={province} value={province}>{province}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
@@ -365,26 +375,6 @@ const CheckOutPage = () => {
               </div>
             </div>
 
-            {/* Additional Info */}
-            <div>
-              <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3 pb-2 border-b border-gray-100">
-                Additional Information
-              </h2>
-              <div>
-                <label htmlFor="additionalInfo" className="block text-sm font-medium text-gray-700 mb-1">
-                  Order Notes <span className="text-gray-400 font-normal">(Optional)</span>
-                </label>
-                <input
-                  id="additionalInfo"
-                  name="additionalInfo"
-                  value={formData.additionalInfo}
-                  onChange={handleInputChange}
-                  placeholder="Notes about your order, e.g. special delivery instructions"
-                  type="text"
-                  className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#B88E2F]/40 focus:border-[#B88E2F] transition"
-                />
-              </div>
-            </div>
           </div>
 
           {/* Right Side: Order Summary */}
