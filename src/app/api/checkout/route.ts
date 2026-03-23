@@ -14,6 +14,14 @@ export async function POST(request: Request) {
              return NextResponse.json({ success: false, error: 'Idempotency Key required' }, { status: 400 });
         }
 
+        if (!customer || !customer.email || !items || !items.length || typeof totalPrice === 'undefined' || !paymentMethod) {
+            return NextResponse.json({ success: false, error: 'Missing required checkout fields (customer, items, totalPrice, or paymentMethod)' }, { status: 400 });
+        }
+
+        if (paymentMethod !== 'Cash On Delivery' && paymentMethod !== 'PayFast') {
+            return NextResponse.json({ success: false, error: `Invalid payment method: ${paymentMethod}` }, { status: 400 });
+        }
+
         // Idempotency execution: Ensure we aren't creating duplicate orders
         const existingOrder = await adminClient.fetch(`*[_type == "order" && idempotencyKey == $idempotencyKey][0]`, { idempotencyKey });
         if (existingOrder) {
@@ -30,7 +38,7 @@ export async function POST(request: Request) {
         }
 
         // Create the order document in Sanity
-        const order = await adminClient.create({
+        const sanityPayload = {
             _type: 'order',
             clerkUserId: userId || '',
             customer,
@@ -51,13 +59,22 @@ export async function POST(request: Request) {
             deliveryStatus: 'processing',
             orderDate: new Date().toISOString(),
             idempotencyKey,
-        })
+        };
+
+        console.log('Sending payload to Sanity:', JSON.stringify(sanityPayload, null, 2));
+        
+        const order = await adminClient.create(sanityPayload);
 
         return NextResponse.json({ success: true, orderId: order._id })
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error creating order in Sanity:', error)
         return NextResponse.json(
-            { success: false, error: 'Failed to create order' },
+            { 
+                success: false, 
+                error: 'Failed to create order',
+                message: error?.message || 'Unknown error',
+                details: error
+            },
             { status: 500 }
         )
     }

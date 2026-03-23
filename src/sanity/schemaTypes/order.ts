@@ -141,6 +141,12 @@ export const order = defineType({
             initialValue: () => new Date().toISOString()
         },
         {
+            name: 'idempotencyKey',
+            type: 'string',
+            title: 'Idempotency Key',
+            description: 'Unique key to prevent duplicate order creation',
+        },
+        {
             name: 'createdAt',
             type: 'datetime',
             title: 'Created At',
