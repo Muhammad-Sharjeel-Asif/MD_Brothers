@@ -17,10 +17,13 @@ export function requireEnv(key: string, featureName: string): string {
 }
 
 export function validateEnv() {
-    const requiredVars = [
-        'STRIPE_SECRET_KEY',
-        'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
-        'STRIPE_WEBHOOK_SECRET',
+    const requiredVars: string[] = [
+        'PAYFAST_MERCHANT_ID',
+        'PAYFAST_MERCHANT_KEY',
+        'PAYFAST_PASSPHRASE',
+        'PAYFAST_RETURN_URL',
+        'PAYFAST_CANCEL_URL',
+        'PAYFAST_NOTIFY_URL'
     ];
 
     const missingVars = requiredVars.filter(envVar => !process.env[envVar]);

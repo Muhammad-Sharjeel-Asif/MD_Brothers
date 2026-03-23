@@ -25,6 +25,10 @@ const CheckOutPage = () => {
     email: '',
   });
 
+  const [shippingCost, setShippingCost] = React.useState(0);
+  const [deliveryTime, setDeliveryTime] = React.useState('');
+  const [shippingThreshold, setShippingThreshold] = React.useState<number | null>(null);
+
   const PAKISTANI_PROVINCES = [
     "Punjab",
     "Sindh",
@@ -44,24 +48,39 @@ const CheckOutPage = () => {
     "Shikarpur", "Jacobabad", "Muzaffarabad"
   ].sort();
 
-  const [paymentMethod, setPaymentMethod] = React.useState('Direct Bank Transfer');
+  const [paymentMethod, setPaymentMethod] = React.useState('Cash On Delivery');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [jazzCashPayload, setJazzCashPayload] = React.useState<Record<string, string> | null>(null);
-  const jazzCashFormRef = React.useRef<HTMLFormElement>(null);
-  const [easypaisaPayload, setEasypaisaPayload] = React.useState<Record<string, string> | null>(null);
-  const easypaisaFormRef = React.useRef<HTMLFormElement>(null);
+  const [payfastPayload, setPayfastPayload] = React.useState<Record<string, string> | null>(null);
+  const payfastFormRef = React.useRef<HTMLFormElement>(null);
 
   React.useEffect(() => {
-    if (jazzCashPayload && jazzCashFormRef.current) {
-        jazzCashFormRef.current.submit();
+    if (payfastPayload && payfastFormRef.current) {
+        payfastFormRef.current.submit();
     }
-  }, [jazzCashPayload]);
-  
+  }, [payfastPayload]);
+
+  // Calculate Shipping
   React.useEffect(() => {
-    if (easypaisaPayload && easypaisaFormRef.current) {
-        easypaisaFormRef.current.submit();
-    }
-  }, [easypaisaPayload]);
+    const calculateShipping = async () => {
+      try {
+        const res = await fetch('/api/shipping/calculate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cartTotal, city: formData.city }),
+        });
+        const data = await res.json();
+        if (data.shippingCost !== undefined) {
+          setShippingCost(data.shippingCost);
+          setDeliveryTime(data.deliveryTime);
+          setShippingThreshold(data.threshold);
+        }
+      } catch (err) {
+        console.error("Failed to calculate shipping", err);
+      }
+    };
+
+    calculateShipping();
+  }, [formData.city, cartTotal]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -94,7 +113,8 @@ const CheckOutPage = () => {
             zipCode: formData.zipCode,
           },
           items: cart,
-          totalPrice: cartTotal,
+          totalPrice: cartTotal + shippingCost,
+          shippingCost: shippingCost,
           paymentMethod: paymentMethod,
           idempotencyKey: idempotencyKey,
         }),
@@ -103,66 +123,25 @@ const CheckOutPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        if (paymentMethod === 'Credit / Debit Card') {
-          // Initiate Stripe Checkout
-          const stripeResponse = await fetch('/api/checkout/stripe', {
+        if (paymentMethod === 'PayFast') {
+          // Initiate PayFast
+          const payfastResponse = await fetch('/api/payfast/initiate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              items: cart,
-              orderId: data.orderId,
-              customerEmail: formData.email,
-            }),
-          });
-          const stripeData = await stripeResponse.json();
-          if (stripeData.url) {
-            window.location.href = stripeData.url;
-            return; // Exit here
-          } else {
-            alert("Failed to initialize Stripe checkout.");
-            setIsSubmitting(false);
-          }
-        } else if (paymentMethod === 'JazzCash') {
-          // Initiate JazzCash
-          const jazzResponse = await fetch('/api/payment/jazzcash/initiate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              items: cart,
+              amount: cartTotal + shippingCost,
               orderId: data.orderId,
               customerData: formData,
             }),
           });
-          const jazzData = await jazzResponse.json();
-          if (jazzData.success && jazzData.payload) {
-             setJazzCashPayload(jazzData.payload);
+          const payfastData = await payfastResponse.json();
+          if (payfastData.success && payfastData.payload) {
+             setPayfastPayload(payfastData.payload);
              return; // State update triggers form submission effect
           } else {
-             alert('Failed to initialize JazzCash payment.');
+             alert('Failed to initialize PayFast payment.');
              setIsSubmitting(false);
           }
-        } else if (paymentMethod === 'Easypaisa') {
-          // Initiate Easypaisa
-          const easypaisaResponse = await fetch('/api/payment/easypaisa/initiate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              items: cart,
-              orderId: data.orderId,
-            }),
-          });
-          const easypaisaData = await easypaisaResponse.json();
-          if (easypaisaData.success && easypaisaData.payload) {
-             setEasypaisaPayload(easypaisaData.payload);
-             return; // Trigger form submission 
-          } else {
-             alert('Failed to initialize Easypaisa payment.');
-             setIsSubmitting(false);
-          }
-        } else if (paymentMethod === 'Direct Bank Transfer') {
-          // Redirect to Custom Bank Details and Proof Submission logic
-          clearCart();
-          router.push(`/checkout/bank-transfer?order_id=${data.orderId}`);
         } else {
           alert("Order placed successfully!");
           clearCart();
@@ -388,39 +367,28 @@ const CheckOutPage = () => {
                   </p>
                 ))}
                 <span className="font-semibold">Subtotal</span>
-                <span className="font-semibold">Total</span>
+                <span className="font-semibold">Shipping</span>
+                <span className="font-semibold text-lg">Total</span>
               </div>
               <div className="flex flex-col gap-3 text-right">
-                <h2 className="text-[24px] font-semibold">Subtotal</h2>
+                <h2 className="text-[24px] font-semibold text-white select-none">Subtotal</h2>
                 {cart.map((item) => (
                   <span key={item._id}>
                     Rs. {(item.price * item.quantity).toFixed(2)}
                   </span>
                 ))}
                 <span>Rs. {cartTotal.toFixed(2)}</span>
+                <span className={shippingCost === 0 ? 'text-green-600 font-medium' : ''}>
+                  {shippingCost === 0 ? 'FREE' : `Rs. ${shippingCost.toFixed(2)}`}
+                  {deliveryTime && <div className="text-[10px] text-gray-500">Est. {deliveryTime}</div>}
+                </span>
                 <span className="text-[#B88E2F] text-[24px] font-semibold">
-                  Rs. {cartTotal.toFixed(2)}
+                  Rs. {(cartTotal + shippingCost).toFixed(2)}
                 </span>
               </div>
             </div>
             <div className="border-b border-[#D9D9D9] w-full mt-6"></div>
             <div className="mt-8 space-y-4">
-              {/* Direct Bank Transfer */}
-              <div className="flex flex-col gap-2">
-                <div
-                  className="flex items-center gap-3 cursor-pointer"
-                  onClick={() => setPaymentMethod('Direct Bank Transfer')}
-                >
-                  <div className={`rounded-full flex-shrink-0 w-[14px] h-[14px] ${paymentMethod === 'Direct Bank Transfer' ? 'bg-black' : 'border border-[#9F9F9F]'}`}></div>
-                  <h1 className={`text-[18px] font-semibold ${paymentMethod === 'Direct Bank Transfer' ? 'text-black' : 'text-[#333333]'}`}>Direct Bank Transfer</h1>
-                </div>
-                {paymentMethod === 'Direct Bank Transfer' && (
-                  <p className="text-[#333333] pl-6 text-sm">
-                    Make your payment directly into our bank account. Please use your Order ID as the payment reference. Your order will not be shipped until the funds have cleared in our account.
-                  </p>
-                )}
-              </div>
-
               {/* Cash On Delivery */}
               <div className="flex flex-col gap-2">
                 <div
@@ -437,50 +405,18 @@ const CheckOutPage = () => {
                 )}
               </div>
 
-              {/* JazzCash */}
+              {/* PayFast */}
               <div className="flex flex-col gap-2">
                 <div
                   className="flex items-center gap-3 cursor-pointer"
-                  onClick={() => setPaymentMethod('JazzCash')}
+                  onClick={() => setPaymentMethod('PayFast')}
                 >
-                  <div className={`rounded-full flex-shrink-0 w-[14px] h-[14px] ${paymentMethod === 'JazzCash' ? 'bg-black' : 'border border-[#9F9F9F]'}`}></div>
-                  <h1 className={`text-[18px] font-semibold ${paymentMethod === 'JazzCash' ? 'text-black' : 'text-[#333333]'}`}>JazzCash</h1>
+                  <div className={`rounded-full flex-shrink-0 w-[14px] h-[14px] ${paymentMethod === 'PayFast' ? 'bg-black' : 'border border-[#9F9F9F]'}`}></div>
+                  <h1 className={`text-[18px] font-semibold ${paymentMethod === 'PayFast' ? 'text-black' : 'text-[#333333]'}`}>PayFast</h1>
                 </div>
-                {paymentMethod === 'JazzCash' && (
+                {paymentMethod === 'PayFast' && (
                   <p className="text-[#333333] pl-6 text-sm">
-                    Pay securely using your JazzCash mobile wallet.
-                  </p>
-                )}
-              </div>
-
-              {/* Easypaisa */}
-              <div className="flex flex-col gap-2">
-                <div
-                  className="flex items-center gap-3 cursor-pointer"
-                  onClick={() => setPaymentMethod('Easypaisa')}
-                >
-                  <div className={`rounded-full flex-shrink-0 w-[14px] h-[14px] ${paymentMethod === 'Easypaisa' ? 'bg-black' : 'border border-[#9F9F9F]'}`}></div>
-                  <h1 className={`text-[18px] font-semibold ${paymentMethod === 'Easypaisa' ? 'text-black' : 'text-[#333333]'}`}>Easypaisa</h1>
-                </div>
-                {paymentMethod === 'Easypaisa' && (
-                  <p className="text-[#333333] pl-6 text-sm">
-                    Pay securely using your Easypaisa mobile wallet.
-                  </p>
-                )}
-              </div>
-
-              {/* Credit / Debit Card */}
-              <div className="flex flex-col gap-2">
-                <div
-                  className="flex items-center gap-3 cursor-pointer"
-                  onClick={() => setPaymentMethod('Credit / Debit Card')}
-                >
-                  <div className={`rounded-full flex-shrink-0 w-[14px] h-[14px] ${paymentMethod === 'Credit / Debit Card' ? 'bg-black' : 'border border-[#9F9F9F]'}`}></div>
-                  <h1 className={`text-[18px] font-semibold ${paymentMethod === 'Credit / Debit Card' ? 'text-black' : 'text-[#333333]'}`}>Credit / Debit Card</h1>
-                </div>
-                {paymentMethod === 'Credit / Debit Card' && (
-                  <p className="text-[#333333] pl-6 text-sm">
-                    Pay securely using your Visa or Mastercard. You will be redirected to the secure payment gateway to complete your purchase.
+                    Pay securely using PayFast module.
                   </p>
                 )}
               </div>
@@ -497,30 +433,15 @@ const CheckOutPage = () => {
           </div>
         </div>
       </div>
-
-      {jazzCashPayload && (
+      
+      {payfastPayload && (
         <form
-          ref={jazzCashFormRef}
-          // Defaulting to sandbox URL, switch to 'https://payments.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/' for production
-          action="https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/"
+          ref={payfastFormRef}
+          action={process.env.NEXT_PUBLIC_PAYFAST_MODE === 'live' ? 'https://www.payfast.co.za/eng/process' : 'https://sandbox.payfast.co.za/eng/process'}
           method="POST"
           style={{ display: 'none' }}
         >
-          {Object.entries(jazzCashPayload).map(([key, value]) => (
-            <input key={key} type="hidden" name={key} value={value as string} />
-          ))}
-        </form>
-      )}
-
-      {easypaisaPayload && (
-        <form
-          ref={easypaisaFormRef}
-          // Switch to EasyPaisa sandbox or live URL upon actual credentials. Normally: https://easypay.easypaisa.com.pk/easypay/Index.jsf
-          action="https://easypay.easypaisa.com.pk/easypay/Index.jsf"
-          method="POST"
-          style={{ display: 'none' }}
-        >
-          {Object.entries(easypaisaPayload).map(([key, value]) => (
+          {Object.entries(payfastPayload).map(([key, value]) => (
             <input key={key} type="hidden" name={key} value={value as string} />
           ))}
         </form>

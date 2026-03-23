@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     try {
         const { userId } = await auth();
         const body = await request.json()
-        const { customer, items, totalPrice, paymentMethod, idempotencyKey } = body
+        const { customer, items, totalPrice, paymentMethod, idempotencyKey, shippingCost } = body
 
         if (!idempotencyKey) {
              return NextResponse.json({ success: false, error: 'Idempotency Key required' }, { status: 400 });
@@ -24,15 +24,9 @@ export async function POST(request: Request) {
         let orderStatus = 'pending'
         let paymentStatus = 'pending'
 
-        if (paymentMethod === 'Cash On Delivery') {
-            orderStatus = 'pending_payment'
+        if (paymentMethod === 'Cash On Delivery' || paymentMethod === 'PayFast') {
+            orderStatus = 'pending' // As per requirement: pending -> confirmed -> shipped ...
             paymentStatus = 'pending'
-        } else if (paymentMethod === 'Direct Bank Transfer') {
-            orderStatus = 'awaiting_bank_transfer'
-            paymentStatus = 'pending'
-        } else if (paymentMethod === 'JazzCash' || paymentMethod === 'Easypaisa') {
-            orderStatus = 'pending_payment'
-            paymentStatus = 'pending' // Actual confirmation would update this to completed
         }
 
         // Create the order document in Sanity
@@ -50,10 +44,11 @@ export async function POST(request: Request) {
                 price: item.price,
             })),
             totalPrice,
+            shippingCost: shippingCost || 0,
             paymentMethod,
             paymentStatus,
-            transactionId: '',
             status: orderStatus,
+            deliveryStatus: 'processing',
             orderDate: new Date().toISOString(),
             idempotencyKey,
         })

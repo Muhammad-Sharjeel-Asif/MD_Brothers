@@ -35,5 +35,23 @@ export const structure: StructureResolver = (S) =>
             ])
         ),
       S.divider(),
-      ...S.documentTypeListItems().filter(item => !['product', 'category', 'order', 'discount'].includes(item.getId() || '')),
+      S.listItem()
+        .title('Settings')
+        .child(
+          S.list()
+            .title('Settings')
+            .items([
+              S.listItem()
+                .title('Shipping Settings')
+                .child(
+                  S.editor()
+                    .title('Shipping Settings')
+                    .schemaType('shippingSettings')
+                    .documentId('shippingSettings')
+                ),
+              S.documentTypeListItem('shippingZone').title('Shipping Zones'),
+            ])
+        ),
+      S.divider(),
+      ...S.documentTypeListItems().filter(item => !['product', 'category', 'order', 'discount', 'shippingSettings', 'shippingZone'].includes(item.getId() || '')),
     ])

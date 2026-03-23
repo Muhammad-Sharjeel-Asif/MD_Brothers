@@ -52,19 +52,46 @@ export const order = defineType({
             options: {
                 list: [
                     { title: 'Pending', value: 'pending' },
-                    { title: 'Pending Payment', value: 'pending_payment' },
-                    { title: 'Awaiting Bank Transfer', value: 'awaiting_bank_transfer' },
-                    { title: 'Processing', value: 'processing' },
-                    { title: 'Paid', value: 'paid' },
+                    { title: 'Confirmed', value: 'confirmed' },
                     { title: 'Shipped', value: 'shipped' },
-                    { title: 'Dispatched', value: 'dispatched' },
+                    { title: 'Out For Delivery', value: 'out_for_delivery' },
                     { title: 'Delivered', value: 'delivered' },
-                    { title: 'Completed', value: 'completed' },
                     { title: 'Cancelled', value: 'cancelled' },
+                    { title: 'Pending Payment', value: 'pending_payment' },
                 ],
                 layout: 'radio'
             },
             initialValue: 'pending'
+        },
+        {
+            name: 'deliveryStatus',
+            type: 'string',
+            title: 'Delivery Status',
+            options: {
+                list: [
+                    { title: 'Processing', value: 'processing' },
+                    { title: 'In Transit', value: 'in_transit' },
+                    { title: 'Delivered', value: 'delivered' },
+                ],
+                layout: 'radio'
+            },
+            initialValue: 'processing'
+        },
+        {
+            name: 'shippingCost',
+            type: 'number',
+            title: 'Shipping Cost',
+            initialValue: 0
+        },
+        {
+            name: 'trackingId',
+            type: 'string',
+            title: 'Tracking ID',
+        },
+        {
+            name: 'courierName',
+            type: 'string',
+            title: 'Courier Name',
         },
         {
             name: 'paymentMethod',
@@ -86,36 +113,16 @@ export const order = defineType({
             initialValue: 'pending'
         },
         {
-            name: 'transactionId',
+            name: 'payfastTransactionId',
             type: 'string',
-            title: 'Transaction ID',
-            description: 'Transaction reference from the payment gateway (if applicable)',
+            title: 'PayFast Transaction ID (pf_payment_id)',
+            description: 'Unique PayFast identifier for this transaction',
         },
         {
-            name: 'gateway',
+            name: 'payfastSignature',
             type: 'string',
-            title: 'Payment Gateway Used',
-            description: 'The specific payment integration processing this order (e.g. Stripe, JazzCash)',
-        },
-        {
-            name: 'paymentTimestamp',
-            type: 'datetime',
-            title: 'Payment Processing Timestamp',
-        },
-        {
-            name: 'stripeSessionId',
-            type: 'string',
-            title: 'Stripe Session ID',
-            description: 'Stripe checkout session ID',
-        },
-        {
-            name: 'proofImage',
-            type: 'image',
-            title: 'Payment Proof Image',
-            description: 'Screenshot of the bank transfer payment proof',
-            options: {
-                hotspot: true,
-            }
+            title: 'PayFast Signature',
+            description: 'Signature hash for verification',
         },
         {
             name: 'deliveryConfirmedAt',

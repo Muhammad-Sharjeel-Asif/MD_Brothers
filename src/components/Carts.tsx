@@ -17,6 +17,22 @@ interface CartItem {
 const Carts: React.FC = () => {
   const { cart, updateQuantity, removeFromCart, cartTotal } = useCartContext();
   const { isSignedIn, isLoaded } = useUser();
+  const [shippingSettings, setShippingSettings] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch('/api/shipping/settings');
+        const data = await res.json();
+        if (data.settings) {
+          setShippingSettings(data.settings);
+        }
+      } catch (err) {
+        console.error("Failed to fetch shipping settings", err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   return (
     <div className="p-4 lg:p-8">
@@ -56,7 +72,7 @@ const Carts: React.FC = () => {
 
                     {/* Price */}
                     <p className="text-slate-600 text-center lg:text-left w-full lg:w-auto">
-                      $ {item.price.toFixed(2)}
+                      Rs. {item.price.toFixed(2)}
                     </p>
 
                     {/* Quantity */}
@@ -75,7 +91,7 @@ const Carts: React.FC = () => {
                     {/* Subtotal & Remove */}
                     <div className="flex justify-between lg:justify-end items-center w-full lg:w-auto">
                       <p className="text-slate-900">
-                        $ {(item.price * item.quantity).toFixed(2)}
+                        Rs. {(item.price * item.quantity).toFixed(2)}
                       </p>
                       <button
                         onClick={() => removeFromCart(item._id)}
@@ -99,15 +115,37 @@ const Carts: React.FC = () => {
         <div className="bg-[#F9F1E7] w-full p-6 rounded-lg shadow-md">
           <h2 className="text-xl lg:text-2xl font-semibold text-center mb-6">Cart Totals</h2>
 
+          {shippingSettings?.freeShippingThreshold && (
+            <div className="mb-6 p-4 bg-white rounded-lg border border-[#B88E2F]/20">
+              {cartTotal >= shippingSettings.freeShippingThreshold ? (
+                <p className="text-green-600 font-medium text-center text-sm">
+                  🎉 Your order qualifies for FREE shipping!
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-slate-700 text-sm font-medium">
+                    Add <span className="text-[#B88E2F]">Rs. {(shippingSettings.freeShippingThreshold - cartTotal).toFixed(0)}</span> more for <span className="font-bold">FREE Shipping</span>
+                  </p>
+                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-[#B88E2F] h-full transition-all duration-500" 
+                      style={{ width: `${Math.min(100, (cartTotal / shippingSettings.freeShippingThreshold) * 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <p className="text-sm lg:text-base">Subtotal</p>
-              <p className="text-sm lg:text-base">${cartTotal.toFixed(2)}</p>
+              <p className="text-sm lg:text-base">Rs. {cartTotal.toFixed(2)}</p>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center border-t border-slate-200 pt-4">
               <p className="text-sm lg:text-base font-semibold">Total</p>
               <p className="text-sm lg:text-base font-semibold text-[#B88E2F]">
-                ${cartTotal.toFixed(2)}
+                Rs. {cartTotal.toFixed(2)}
               </p>
             </div>
           </div>
