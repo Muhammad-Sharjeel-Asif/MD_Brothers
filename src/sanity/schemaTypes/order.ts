@@ -147,6 +147,44 @@ export const order = defineType({
             description: 'Unique key to prevent duplicate order creation',
         },
         {
+            name: 'gateway',
+            type: 'string',
+            title: 'Payment Gateway',
+            description: 'The payment provider used (e.g., COD, PayFast)',
+        },
+        {
+            name: 'transactionId',
+            type: 'string',
+            title: 'Transaction ID',
+            description: 'External ID from the payment provider (e.g., pf_payment_id)',
+        },
+        {
+            name: 'paymentLogs',
+            type: 'array',
+            title: 'Payment Logs',
+            description: 'Audit trail for payment events',
+            of: [
+                {
+                    type: 'object',
+                    fields: [
+                        { name: 'timestamp', type: 'datetime', title: 'Timestamp' },
+                        { name: 'event', type: 'string', title: 'Event Name' },
+                        { name: 'message', type: 'string', title: 'Message / Details' },
+                        { name: 'rawData', type: 'text', title: 'Raw Data (JSON)' }
+                    ]
+                }
+            ]
+        },
+        {
+            name: 'proofImage',
+            type: 'image',
+            title: 'Proof of Payment',
+            description: 'Uploaded image for manual verification, if applicable',
+            options: {
+                hotspot: true,
+            }
+        },
+        {
             name: 'createdAt',
             type: 'datetime',
             title: 'Created At',

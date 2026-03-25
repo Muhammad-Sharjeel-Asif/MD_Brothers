@@ -4,7 +4,7 @@ import { getSanityClient } from '@/sanity/lib/client';
 export async function GET() {
   const client = getSanityClient();
   if (!client) {
-    return NextResponse.json({ error: 'Sanity client not initialized' }, { status: 500 });
+    return NextResponse.json({ settings: null, zones: [] });
   }
 
   try {
@@ -14,6 +14,7 @@ export async function GET() {
     return NextResponse.json({ settings, zones });
   } catch (error) {
     console.error('Error fetching shipping settings:', error);
-    return NextResponse.json({ error: 'Failed to fetch shipping settings' }, { status: 500 });
+    // Return empty results instead of crashing/erroring
+    return NextResponse.json({ settings: null, zones: [] });
   }
 }

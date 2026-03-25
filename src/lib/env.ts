@@ -1,40 +1,50 @@
 export function getEnv(key: string, fallback: string = ''): string {
     const value = process.env[key];
     if (!value) {
+        if (process.env.NODE_ENV !== 'production') {
+            console.warn(`⚠️ Warning: Environment variable ${key} is missing. Using fallback: "${fallback}"`);
+        }
         return fallback;
     }
     return value;
 }
 
+export function isSanityConfigured(): boolean {
+    const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
+    const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET;
+    return !!(projectId && dataset);
+}
+
+export function isPayFastConfigured(): boolean {
+    return !!(
+        process.env.PAYFAST_MERCHANT_ID &&
+        process.env.PAYFAST_MERCHANT_KEY &&
+        process.env.PAYFAST_PASSPHRASE &&
+        process.env.PAYFAST_RETURN_URL &&
+        process.env.PAYFAST_CANCEL_URL &&
+        process.env.PAYFAST_NOTIFY_URL
+    );
+}
+
 export function requireEnv(key: string, featureName: string): string {
     const value = process.env[key];
     if (!value) {
-        console.error(`❌ Critical Missing Environment Variable: ${key} is required for ${featureName}.`);
-        console.warn(`⚠️ The ${featureName} feature may fail or crash if this variable is accessed.`);
-        return ''; // Return empty string instead of throwing immediately to prevent module load crash
+        console.warn(`❌ Missing Environment Variable: ${key} is required for ${featureName}.`);
+        return ''; 
     }
     return value;
 }
 
 export function validateEnv() {
-    const requiredVars: string[] = [
-        'PAYFAST_MERCHANT_ID',
-        'PAYFAST_MERCHANT_KEY',
-        'PAYFAST_PASSPHRASE',
-        'PAYFAST_RETURN_URL',
-        'PAYFAST_CANCEL_URL',
-        'PAYFAST_NOTIFY_URL'
-    ];
+    if (!isSanityConfigured()) {
+        console.warn('⚠️ Sanity CMS is NOT configured. CMS features will be disabled.');
+    }
+    
+    if (!isPayFastConfigured()) {
+        console.warn('⚠️ PayFast is NOT configured. Online payments will be disabled.');
+    }
 
-    const missingVars = requiredVars.filter(envVar => !process.env[envVar]);
-
-    if (missingVars.length > 0) {
-        console.error('❌ Missing warning environment variables:');
-        missingVars.forEach(envVar => {
-            console.error(`   - ${envVar}`);
-        });
-        console.warn('⚠️ Server proceeding without all payment environment variables. Checkout capabilities may fail.');
-    } else {
+    if (isSanityConfigured() && isPayFastConfigured()) {
         console.log('✅ Environment configuration validated successfully.');
     }
 }

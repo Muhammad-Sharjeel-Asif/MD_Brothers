@@ -1,25 +1,19 @@
 import { createClient } from 'next-sanity'
 import { apiVersion } from '../env'
+import { isSanityConfigured } from '@/lib/env'
 
 export function getSanityClient() {
   const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
   const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET;
 
-  // Temporarily log specifically as requested in Step 4
-  console.log("Sanity ENV:", {
-    projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
-    dataset: process.env.NEXT_PUBLIC_SANITY_DATASET,
-  });
-
-  if (!projectId || !dataset) {
-    console.warn("Sanity not configured properly: Missing projectId or dataset");
+  if (!isSanityConfigured()) {
     return null;
   }
 
   return createClient({
-    projectId,
-    dataset,
+    projectId: projectId!,
+    dataset: dataset!,
     apiVersion: process.env.NEXT_PUBLIC_SANITY_API_VERSION || apiVersion,
-    useCdn: true, // Set to false if statically generating pages, using ISR or tag-based revalidation
+    useCdn: true,
   })
 }

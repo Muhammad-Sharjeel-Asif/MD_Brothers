@@ -15,7 +15,6 @@ interface Order {
   gateway?: string;
   transactionId?: string;
   paymentTimestamp?: string;
-  stripeSessionId?: string;
   proofImageUrl?: string;
   orderDate: string;
   paymentLogs?: { _key: string, gateway: string, eventType: string, transactionId: string, status: string, timestamp: string }[];
@@ -23,7 +22,7 @@ interface Order {
 
 const statuses = ["pending", "pending_payment", "awaiting_bank_transfer", "processing", "paid", "shipped", "dispatched", "delivered", "completed", "cancelled"];
 const paymentStatuses = ["pending", "completed", "failed"];
-const paymentMethods = ["Cash On Delivery", "Direct Bank Transfer", "Stripe", "JazzCash", "Easypaisa"];
+const paymentMethods = ["COD", "PayFast"];
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -224,7 +223,6 @@ export default function OrdersPage() {
                           <p><span className="font-medium">Status:</span> <span className={`capitalize font-semibold ${order.paymentStatus === 'completed' ? 'text-green-600' : 'text-orange-600'}`}>{order.paymentStatus || 'pending'}</span></p>
                           {order.gateway && <p><span className="font-medium">Gateway:</span> {order.gateway}</p>}
                           {order.transactionId && <p><span className="font-medium">Transaction ID:</span> <span className="text-xs bg-gray-100 px-1 py-0.5 rounded">{order.transactionId}</span></p>}
-                          {order.stripeSessionId && <p><span className="font-medium">Stripe Session:</span> <span className="text-xs bg-gray-100 px-1 py-0.5 rounded break-all">{order.stripeSessionId}</span></p>}
                           {order.paymentTimestamp && <p><span className="font-medium">Logged At:</span> {new Date(order.paymentTimestamp).toLocaleString()}</p>}
                         </div>
                         

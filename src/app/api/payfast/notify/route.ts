@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { adminClient } from '@/sanity/lib/adminClient';
+import { getAdminClient } from '@/sanity/lib/adminClient';
+import { isPayFastConfigured, getEnv } from '@/lib/env';
 
 export async function POST(request: Request) {
     try {
@@ -13,10 +14,16 @@ export async function POST(request: Request) {
         }
 
         const signatureFromPayFast = data.signature;
-        delete data.signature; // Remove signature to calculate our own hash
+        delete data.signature;
 
-        // 1. Verify Signature
-        const passphrase = process.env.PAYFAST_PASSPHRASE || '';
+        // 1. Verify Configuration
+        if (!isPayFastConfigured()) {
+            console.error('PayFast Webhook received but PayFast is not configured.');
+            return new Response('Not Configured', { status: 503 });
+        }
+
+        // 2. Verify Signature
+        const passphrase = getEnv('PAYFAST_PASSPHRASE', '');
         const sortedKeys = Object.keys(data).sort();
         
         let signatureString = sortedKeys.map(key => {
@@ -34,18 +41,22 @@ export async function POST(request: Request) {
                 received: signatureFromPayFast,
                 generated: generatedSignature
             });
-            // We still return 200 to acknowledge receipt to PayFast, but we don't process it.
-            return NextResponse.json({ error: 'Invalid Signature' }, { status: 400 });
+            return new Response('Invalid Signature', { status: 400 });
         }
 
-        // 2. Validate Payment Status
+        // 3. Process Payment
         const paymentStatus = data.payment_status;
         const orderId = data.m_payment_id;
         const pfPaymentId = data.pf_payment_id;
-        const amountGross = data.amount_gross;
 
         if (paymentStatus === 'COMPLETE') {
-            // Find the order
+            const adminClient = getAdminClient();
+            if (!adminClient) {
+                console.error('Failed to get admin client for PayFast webhook');
+                return new Response('Database Error', { status: 500 });
+            }
+
+            // Find the order and check if it's already completed to prevent duplicates
             const existingOrder = await adminClient.fetch(`*[_type == "order" && _id == $orderId][0]`, { orderId });
             
             if (!existingOrder) {
@@ -53,30 +64,32 @@ export async function POST(request: Request) {
                 return new Response('Order not found', { status: 404 });
             }
 
-            // Optional: verify amountGross is similar to existingOrder.totalPrice 
-            // parseFloat(amountGross) >= existingOrder.totalPrice
+            if (existingOrder.paymentStatus === 'completed') {
+                console.log(`PayFast Webhook: Order ${orderId} already marked as completed. Skipping.`);
+                return new Response('OK', { status: 200 });
+            }
 
             // Update the Sanity Order
             await adminClient.patch(orderId)
                 .set({
                     paymentStatus: 'completed',
-                    status: 'confirmed',
+                    status: 'confirmed', // confirm order once payment is received
                     payfastTransactionId: pfPaymentId,
                     payfastSignature: signatureFromPayFast,
+                    lastUpdated: new Date().toISOString()
                 })
                 .commit();
                 
-            console.log(`Order ${orderId} successfully completed via PayFast.`);
+            console.log(`Order ${orderId} successfully completed via PayFast ITN.`);
         } else {
-            console.log(`PayFast ITN for ${orderId}: Payment Status is ${paymentStatus}`);
-            // Depending on architecture, you can handle 'FAILED' or 'PENDING' statuses.
+            console.log(`PayFast ITN received for ${orderId} but status is ${paymentStatus}. No action taken.`);
         }
 
         // PayFast Requires a '200 OK' response for ITN
         return new Response('OK', { status: 200 });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('PayFast ITN error:', error);
-        return new Response('Internal Server Error', { status: 500 });
+        return new Response(error?.message || 'Internal Server Error', { status: 500 });
     }
 }

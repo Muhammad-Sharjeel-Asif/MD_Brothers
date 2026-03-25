@@ -7,7 +7,7 @@ export async function GET() {
   try {
     const orders = await adminClient.fetch(`*[_type == "order"] | order(orderDate desc) {
       _id, customer, items, totalPrice, status, paymentStatus, paymentMethod, orderDate, deliveryAgent, deliveryConfirmedAt,
-      gateway, transactionId, paymentTimestamp, stripeSessionId, paymentLogs,
+      gateway, transactionId, paymentTimestamp, paymentLogs,
       "proofImageUrl": proofImage.asset->url
     }`);
     return NextResponse.json(orders);

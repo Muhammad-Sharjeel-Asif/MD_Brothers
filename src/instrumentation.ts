@@ -7,14 +7,10 @@ export async function register() {
             validateEnv();
         } catch (error: any) {
             console.error('\n=============================================');
-            console.error('SERVER STARTUP HALTED DUE TO ENV MISCONFIG:');
-            console.error(error.message);
+            console.error('SERVER STARTUP WARNING (ENV MISCONFIG):');
+            console.error(error.message || error);
             console.error('=============================================\n');
-            
-            // Exit early to prevent bad deployments if required by environment
-            if (process.env.NODE_ENV === 'production') {
-                process.exit(1);
-            }
+            // Do NOT exit, allow app to run with fallbacks
         }
     }
 }

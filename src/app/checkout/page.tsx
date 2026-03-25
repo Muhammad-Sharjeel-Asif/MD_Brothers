@@ -51,7 +51,22 @@ const CheckOutPage = () => {
   const [paymentMethod, setPaymentMethod] = React.useState('Cash On Delivery');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [payfastPayload, setPayfastPayload] = React.useState<Record<string, string> | null>(null);
+  const [isPayFastAvailable, setIsPayFastAvailable] = React.useState(true);
   const payfastFormRef = React.useRef<HTMLFormElement>(null);
+
+  React.useEffect(() => {
+    const checkConfig = async () => {
+      try {
+        const res = await fetch('/api/shipping/settings');
+        const data = await res.json();
+        setIsPayFastAvailable(!!data.isPayFastConfigured);
+      } catch (err) {
+        console.warn("Failed to check configuration settings", err);
+        setIsPayFastAvailable(false);
+      }
+    };
+    checkConfig();
+  }, []);
 
   React.useEffect(() => {
     if (payfastPayload && payfastFormRef.current) {
@@ -408,16 +423,23 @@ const CheckOutPage = () => {
               {/* PayFast */}
               <div className="flex flex-col gap-2">
                 <div
-                  className="flex items-center gap-3 cursor-pointer"
-                  onClick={() => setPaymentMethod('PayFast')}
+                  className={`flex items-center gap-3 ${isPayFastAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
+                  onClick={() => isPayFastAvailable && setPaymentMethod('PayFast')}
                 >
                   <div className={`rounded-full flex-shrink-0 w-[14px] h-[14px] ${paymentMethod === 'PayFast' ? 'bg-black' : 'border border-[#9F9F9F]'}`}></div>
-                  <h1 className={`text-[18px] font-semibold ${paymentMethod === 'PayFast' ? 'text-black' : 'text-[#333333]'}`}>PayFast</h1>
+                  <h1 className={`text-[18px] font-semibold ${paymentMethod === 'PayFast' ? 'text-black' : 'text-[#333333]'}`}>
+                    PayFast {!isPayFastAvailable && <span className="text-xs font-normal text-red-500">(Temporarily Unavailable)</span>}
+                  </h1>
                 </div>
-                {paymentMethod === 'PayFast' && (
+                {paymentMethod === 'PayFast' && isPayFastAvailable && (
                   <p className="text-[#333333] pl-6 text-sm">
                     Pay securely using PayFast module.
                   </p>
+                )}
+                {!isPayFastAvailable && (
+                   <p className="text-red-500 pl-6 text-xs italic">
+                     Online payment is currently unavailable. Please use Cash on Delivery.
+                   </p>
                 )}
               </div>
             </div>

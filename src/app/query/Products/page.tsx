@@ -63,23 +63,31 @@ const ProductCards: React.FC = () => {
         
         const data: Product[] | null = await fetchSanityData(query);
 
-        if (!data) {
-          setError(true);
-          setLoading(false);
-          return;
+        // Handle error state or missing config
+        if (data === null || (data.length === 0 && query.includes('*[_type == "product"]'))) {
+          const configRes = await fetch('/api/shipping/settings');
+          const configData = await configRes.json();
+          if (!configData.isSanityConfigured || data === null) {
+            setError(true);
+            setLoading(false);
+            return;
+          }
         }
 
+        // data is now guaranteed to be Product[]
+        const validData = data as Product[];
+
         const allCategories = Array.from(
-          new Set(data.map((p) => p.categoryName).filter(Boolean))
+          new Set(validData.map((p) => p.categoryName).filter(Boolean))
         );
         setCategories(["All", ...allCategories.sort()]);
 
-        const highest = Math.max(...data.map((p) => p.price), 0);
+        const highest = Math.max(...validData.map((p) => p.price), 0);
         const ceilPrice = Math.ceil(highest / 100) * 100 || 1000;
         setMaxPrice(ceilPrice);
         setPriceRange([0, ceilPrice]);
 
-        setProducts(data);
+        setProducts(validData);
       } catch (error) {
         console.error("Error fetching products:", error);
         setError(true);

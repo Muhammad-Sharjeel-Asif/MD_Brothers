@@ -66,6 +66,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const { user } = useUser();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [config, setConfig] = useState({ isSanityConfigured: true, isPayFastConfigured: true });
+
+  React.useEffect(() => {
+    fetch('/api/shipping/settings')
+      .then(res => res.json())
+      .then(data => setConfig(data))
+      .catch(() => setConfig({ isSanityConfigured: false, isPayFastConfigured: false }));
+  }, []);
 
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
@@ -73,7 +81,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex pt-[80px]">
+    <div className="min-h-screen bg-gray-50 flex flex-col pt-[80px]">
+      {(!config.isSanityConfigured || !config.isPayFastConfigured) && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-amber-800 text-sm flex items-center justify-center gap-2">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span>
+            <b>Configuration Warning:</b> 
+            {!config.isSanityConfigured && " Sanity CMS is not configured."}
+            {!config.isPayFastConfigured && " PayFast integration is not configured."}
+            Check your environment variables.
+          </span>
+        </div>
+      )}
+      <div className="flex flex-1">
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -143,6 +165,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {children}
         </div>
       </main>
+      </div>
     </div>
   );
 }

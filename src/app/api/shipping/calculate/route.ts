@@ -7,7 +7,12 @@ export async function POST(req: Request) {
 
     const client = getSanityClient();
     if (!client) {
-      return NextResponse.json({ error: 'Sanity client not initialized' }, { status: 500 });
+      return NextResponse.json({ 
+        shippingCost: 250, // Standard default fallback
+        deliveryTime: "3-7 days", 
+        isFree: false,
+        threshold: null 
+      });
     }
 
     // Fetch shipping settings and zones

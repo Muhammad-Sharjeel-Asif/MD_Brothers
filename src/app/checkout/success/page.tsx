@@ -1,32 +1,87 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 export default function CheckoutSuccessPage() {
     const searchParams = useSearchParams();
-    const session_id = searchParams.get('session_id');
     const order_id = searchParams.get('order_id');
+    const payment_method = searchParams.get('payment_method');
     
-    const [status, setStatus] = useState<'loading' | 'success' | 'invalid'>('loading');
+    const [status, setStatus] = useState<'loading' | 'success' | 'processing' | 'invalid'>('loading');
+    const [retryCount, setRetryCount] = useState(0);
+    const maxRetries = 10; // Poll for 30 seconds (3s interval)
+
+    const checkOrderStatus = useCallback(async () => {
+        if (!order_id) {
+            setStatus('invalid');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/orders/${order_id}`);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    // Order might not be indexed yet, wait and retry
+                    setRetryCount(prev => prev + 1);
+                    return;
+                }
+                setStatus('invalid');
+                return;
+            }
+
+            const order = await response.json();
+            
+            // If it's COD, it's successful immediately
+            if (order.paymentMethod === 'COD') {
+                setStatus('success');
+                return;
+            }
+
+            // For PayFast, wait for 'completed' status
+            if (order.paymentStatus === 'completed') {
+                setStatus('success');
+            } else {
+                setStatus('processing');
+                setRetryCount(prev => prev + 1);
+            }
+        } catch (error) {
+            console.error('Error checking order status:', error);
+            setRetryCount(prev => prev + 1);
+        }
+    }, [order_id]);
 
     useEffect(() => {
-        if (session_id) {
-            // Simple check just verifying we have IDs, server handles actual secure update via webhook.
-            // In a more robust setup, you could ping a Next.js endpoint to retrieve the session securely.
-            setStatus('success');
-        } else if (order_id) {
-            setStatus('success'); // Fallback for non-stripe payments
-        } else {
+        if (!order_id) {
             setStatus('invalid');
+            return;
         }
-    }, [session_id, order_id]);
 
-    if (status === 'loading') {
+        if (status === 'success' || status === 'invalid') return;
+
+        if (retryCount >= maxRetries) {
+            // If we timed out polling, but it's a PayFast order, we still show success 
+            // but with a disclaimer that payment is being processed.
+            setStatus('success');
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            checkOrderStatus();
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [order_id, retryCount, checkOrderStatus, status]);
+
+    if (status === 'loading' || status === 'processing') {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B88E2F]"></div>
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B88E2F] mb-4"></div>
+                <p className="text-gray-600 animate-pulse">
+                    {status === 'processing' ? 'Confirming payment with PayFast...' : 'Confirming your order...'}
+                </p>
+                <p className="text-xs text-gray-400 mt-2">This may take a few moments</p>
             </div>
         );
     }
@@ -38,8 +93,8 @@ export default function CheckoutSuccessPage() {
                     <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="text-red-500 text-2xl">❌</span>
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Invalid Order Data</h1>
-                    <p className="text-gray-600 mb-6">We couldn't verify this order session.</p>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Order Not Found</h1>
+                    <p className="text-gray-600 mb-6">We couldn't retrieve your order details. Please contact support if you believe this is an error.</p>
                     <Link href="/" className="inline-block w-full bg-[#B88E2F] text-white py-3 rounded-lg font-semibold hover:bg-[#a37d2a] transition-colors">
                         Return Home
                     </Link>
@@ -70,15 +125,9 @@ export default function CheckoutSuccessPage() {
                             <span className="text-gray-900 font-medium font-mono text-sm">{order_id}</span>
                         </div>
                     )}
-                    {session_id && (
-                        <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Payment Ref</span>
-                            <span className="text-gray-900 font-medium font-mono text-sm break-all">{session_id.substring(0, 16)}...</span>
-                        </div>
-                    )}
                     <div className="mt-4 pt-4 border-t border-gray-200">
                         <p className="text-xs text-gray-500 text-center">
-                            We will send a confirmation email with order details shortly.
+                            We have sent a confirmation email to your registered address.
                         </p>
                     </div>
                 </div>
