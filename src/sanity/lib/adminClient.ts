@@ -46,5 +46,22 @@ export const adminClient = {
         const client = getAdminClient();
         if (!client) throw new Error("Sanity not configured");
         return client.patch(id);
+    },
+    delete: (id: string) => {
+        const client = getAdminClient();
+        if (!client) throw new Error("Sanity not configured");
+        return client.delete(id);
+    },
+    assets: {
+        upload: async (type: string, body: any, options: any = {}) => {
+            const client = getAdminClient();
+            if (!client) throw new Error("Sanity not configured");
+            return client.assets.upload(type as any, body, options);
+        }
+    },
+    config: () => {
+        const client = getAdminClient();
+        if (!client) return { projectId: null, dataset: null };
+        return client.config();
     }
 }

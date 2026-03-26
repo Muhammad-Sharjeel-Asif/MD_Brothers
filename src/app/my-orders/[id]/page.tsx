@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Feature from "@/components/Feature";
+import OrderInvoice from "@/components/OrderInvoice";
 
 interface OrderItem {
   quantity: number;
@@ -16,6 +17,7 @@ interface OrderItem {
 
 interface Order {
   _id: string;
+  orderId?: string;
   customer: {
     firstName: string;
     lastName: string;
@@ -29,6 +31,7 @@ interface Order {
   status: string;
   paymentStatus: string;
   paymentMethod: string;
+  shippingCost?: number;
   orderDate: string;
   deliveryAgent?: string;
   deliveryConfirmedAt?: string;
@@ -174,7 +177,7 @@ export default function OrderDetailPage({
               Back to My Orders
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">
-              Order #{order._id.slice(-8).toUpperCase()}
+              {order.orderId || `Order #${order._id.slice(-8).toUpperCase()}`}
             </h1>
             <p className="text-sm text-gray-500 mt-1">
               Placed on{" "}
@@ -187,9 +190,20 @@ export default function OrderDetailPage({
               })}
             </p>
           </div>
-          <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold capitalize ${statusColors[order.status] || "bg-gray-100 text-gray-800"}`}>
-            {order.status.replace(/_/g, " ")}
-          </span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#B88E2F] text-[#B88E2F] hover:bg-[#B88E2F] hover:text-white transition-all rounded-xl text-sm font-semibold shadow-sm no-print"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Print Invoice
+            </button>
+            <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold capitalize ${statusColors[order.status] || "bg-gray-100 text-gray-800"}`}>
+              {order.status.replace(/_/g, " ")}
+            </span>
+          </div>
         </div>
 
         {/* Status Timeline */}
@@ -347,6 +361,13 @@ export default function OrderDetailPage({
       </div>
 
       <Feature />
+      
+      {/* Hidden Invoice for Printing */}
+      <div className="hidden">
+        <div className="print-only">
+          <OrderInvoice order={order as any} />
+        </div>
+      </div>
     </>
   );
 }

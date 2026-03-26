@@ -91,9 +91,13 @@ export async function POST(request: Request) {
              return NextResponse.json({ success: false, message: 'Failed to verify unique order ID' }, { status: 400 });
         }
 
-        // Payload Construction with Optional Chaining
+        // Generate a human-readable unique order ID
+        const orderId = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+
+        // Payload Construction
         const sanityPayload = {
             _type: 'order',
+            orderId,
             clerkUserId: userId || '',
             customer: {
                 firstName: customer?.firstName || '',
@@ -104,8 +108,8 @@ export async function POST(request: Request) {
                 city: customer?.city || '',
                 zipCode: customer?.zipCode || '',
             },
-            items: validItems.map((item: any) => ({
-                _key: Math.random().toString(36).substring(2, 9),
+            items: validItems.map((item: any, index: number) => ({
+                _key: `item-${index}-${Date.now()}`,
                 product: {
                     _type: 'reference',
                     _ref: item._id,

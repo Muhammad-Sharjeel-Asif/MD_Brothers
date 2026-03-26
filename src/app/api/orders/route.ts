@@ -26,6 +26,7 @@ export async function GET() {
     const orders = await adminClient.fetch(
       `*[_type == "order" && clerkUserId == $userId] | order(orderDate desc) {
         _id,
+        orderId,
         customer,
         items[] {
           quantity,

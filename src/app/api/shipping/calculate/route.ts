@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       client.fetch(`*[_type == "shippingZone"]`)
     ]);
 
-    let shippingCost = (settings?.baseShippingCharge || 0) + (settings?.perOrderCharge || 0);
+    let shippingCost = settings?.deliveryCharges || 0;
     let deliveryTime = "3-5 days"; // Default
 
     // Check for free shipping threshold

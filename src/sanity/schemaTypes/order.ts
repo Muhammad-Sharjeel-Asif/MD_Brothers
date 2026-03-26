@@ -6,6 +6,13 @@ export const order = defineType({
     title: 'Order',
     fields: [
         {
+            name: 'orderId',
+            type: 'string',
+            title: 'Order ID',
+            description: 'Unique human-readable order identifier (e.g., ORD-12345)',
+            validation: (rule) => rule.required(),
+        },
+        {
             name: 'customer',
             type: 'object',
             title: 'Customer Details',

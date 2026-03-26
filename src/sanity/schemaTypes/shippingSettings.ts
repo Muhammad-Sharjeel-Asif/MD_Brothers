@@ -3,21 +3,15 @@ import { defineType } from "sanity"
 export const shippingSettings = defineType({
     name: 'shippingSettings',
     type: 'document',
-    title: 'Shipping Settings',
+    title: 'Site Settings', // Renamed title for a more global feel
     fields: [
         {
-            name: 'baseShippingCharge',
+            name: 'deliveryCharges', // Changed to match "Delivery Charges" terminology
             type: 'number',
-            title: 'Base Shipping Charge',
-            description: 'The starting shipping fee for any order.',
-            initialValue: 0,
-        },
-        {
-            name: 'perOrderCharge',
-            type: 'number',
-            title: 'Per-Order Shipping Charge',
-            description: 'Additional fixed charge applied to every order.',
-            initialValue: 0,
+            title: 'Standard Delivery Charges',
+            description: 'The standard shipping fee applied to orders.',
+            initialValue: 250,
+            validation: (rule) => rule.required().min(0),
         },
         {
             name: 'freeShippingThreshold',
@@ -25,12 +19,13 @@ export const shippingSettings = defineType({
             title: 'Free Shipping Threshold',
             description: 'Orders above this amount will have free shipping.',
             initialValue: 5000,
+            validation: (rule) => rule.min(0),
         },
         {
             name: 'shippingMessage',
             type: 'string',
             title: 'Shipping Message',
-            description: 'Optional message to show on the cart/checkout page.',
+            description: 'Message shown to customers about delivery.',
             initialValue: 'Fast delivery nationwide!',
         }
     ]

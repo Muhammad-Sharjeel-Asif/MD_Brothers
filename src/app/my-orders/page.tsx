@@ -15,6 +15,7 @@ interface OrderItem {
 
 interface Order {
   _id: string;
+  orderId?: string; // Human-readable ID
   customer: {
     firstName: string;
     lastName: string;
@@ -68,10 +69,14 @@ export default function MyOrdersPage() {
       const res = await fetch("/api/orders");
       if (res.ok) {
         const data = await res.json();
-        setOrders(data);
+        // The API returns { success: true, orders: [...] }
+        setOrders(data.orders || []);
+      } else {
+        setOrders([]);
       }
     } catch (err) {
       console.error("Failed to fetch orders:", err);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -174,7 +179,7 @@ export default function MyOrdersPage() {
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-gray-900">
-                          Order #{order._id.slice(-8).toUpperCase()}
+                          {order.orderId || `Order #${order._id.slice(-8).toUpperCase()}`}
                         </p>
                         <p className="text-xs text-gray-500">
                           {new Date(order.orderDate).toLocaleDateString("en-US", {
