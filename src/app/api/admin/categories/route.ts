@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminClient } from "@/sanity/lib/adminClient";
+import { requireAdmin, isAuthContext } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const authResult = await requireAdmin();
+  if (!isAuthContext(authResult)) return authResult;
+
   try {
     const categories = await adminClient.fetch(`*[_type == "category"] | order(name asc) {
       _id, name, "slug": slug.current, description,
@@ -17,6 +21,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const authResult = await requireAdmin();
+  if (!isAuthContext(authResult)) return authResult;
+
   try {
     const body = await req.json();
     const doc: any = {

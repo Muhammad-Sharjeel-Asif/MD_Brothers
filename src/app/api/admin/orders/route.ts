@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminClient } from "@/sanity/lib/adminClient";
+import { requireAdmin, isAuthContext } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const authResult = await requireAdmin();
+  if (!isAuthContext(authResult)) return authResult;
+
   try {
     const orders = await adminClient.fetch(`*[_type == "order"] | order(orderDate desc) {
       _id, customer, items, totalPrice, status, paymentStatus, paymentMethod, orderDate, deliveryAgent, deliveryConfirmedAt,
@@ -17,6 +21,9 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
+  const authResult = await requireAdmin();
+  if (!isAuthContext(authResult)) return authResult;
+
   try {
     const body = await req.json();
     const { id, status, paymentStatus, deliveryAgent } = body;
@@ -35,7 +42,6 @@ export async function PATCH(req: NextRequest) {
         updates.paymentStatus = 'completed';
         updates.deliveryConfirmedAt = (new Date()).toISOString();
     } else if (status === 'dispatched' && deliveryAgent) {
-        // Ensure standard properties apply when dispatching a rider
         updates.deliveryAgent = deliveryAgent;
     }
 

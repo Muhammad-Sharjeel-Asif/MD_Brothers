@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/sanity/lib/adminClient";
+import { requireAdmin, isAuthContext } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,9 @@ interface Order {
 }
 
 export async function GET() {
+  const authResult = await requireAdmin();
+  if (!isAuthContext(authResult)) return authResult;
+
   try {
     const [orders, products, categories] = await Promise.all([
       adminClient.fetch(`*[_type == "order"] | order(orderDate desc) {
@@ -99,7 +103,6 @@ export async function GET() {
       });
     });
     const categoryPerformance = Object.values(categoryStats).sort((a, b) => b.totalSales - a.totalSales);
-    // Merge product counts from categories fetch
     const categoryWithCounts = categoryPerformance.map((cp) => {
       const found = (categories as any[]).find((c) => c.name === cp.name);
       return { ...cp, productCount: found?.productCount || 0 };

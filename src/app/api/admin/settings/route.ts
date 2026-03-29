@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { getAdminClient } from "@/sanity/lib/adminClient";
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "m.sharjeelasif1435@gmail.com";
+import { requireAdmin, isAuthContext } from "@/lib/auth";
 
 export async function GET() {
+  const authResult = await requireAdmin();
+  if (!isAuthContext(authResult)) return authResult;
+
   try {
-    const { userId } = await auth();
-    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const user = await currentUser();
-    if (user?.emailAddresses[0].emailAddress !== ADMIN_EMAIL) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const client = getAdminClient();
     if (!client) return NextResponse.json({ error: "Database connection failed" }, { status: 503 });
     const settings = await client.fetch(`*[_type == "shippingSettings"][0]`);
@@ -24,15 +17,10 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
+  const authResult = await requireAdmin();
+  if (!isAuthContext(authResult)) return authResult;
+
   try {
-    const { userId } = await auth();
-    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const user = await currentUser();
-    if (user?.emailAddresses[0].emailAddress !== ADMIN_EMAIL) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const body = await req.json();
     const { deliveryCharges, freeShippingThreshold, shippingMessage } = body;
 

@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminClient } from "@/sanity/lib/adminClient";
+import { requireAdmin, isAuthContext } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const authResult = await requireAdmin();
+  if (!isAuthContext(authResult)) return authResult;
+
   try {
     const products = await adminClient.fetch(`*[_type == "product"] | order(_createdAt desc) {
       _id,
@@ -27,6 +31,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const authResult = await requireAdmin();
+  if (!isAuthContext(authResult)) return authResult;
+
   try {
     const body = await req.json();
     const doc: any = {
