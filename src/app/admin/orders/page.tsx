@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import OrderInvoice from "@/components/OrderInvoice";
 
 interface Order {
   _id: string;
+  orderId?: string;
   customer: { firstName: string; lastName: string; email: string; phone: string; address: string; city: string; zipCode: string };
-  items: { product: any; quantity: number; price: number }[];
+  items: { quantity: number; price: number; productTitle?: string }[];
   totalPrice: number;
   status: string;
   paymentStatus: string;
@@ -48,6 +50,7 @@ export default function OrdersPage() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [agentInput, setAgentInput] = useState<Record<string, string>>({});
+  const [printingOrderId, setPrintingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -173,24 +176,39 @@ export default function OrdersPage() {
       <div className="space-y-4">
         {filtered.map((order) => (
           <div key={order._id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            {/* Order Header */}
             <div
-              className="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+              className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
               onClick={() => setExpandedId(expandedId === order._id ? null : order._id)}
             >
-              <div className="flex items-center gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">
-                    {order.customer?.firstName} {order.customer?.lastName}
-                  </p>
-                  <p className="text-xs text-gray-500">{order.customer?.email}</p>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-gray-900">
+                    {order.orderId || `Order #${order._id.slice(-8).toUpperCase()}`}
+                  </span>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold capitalize border ${statusColors[order.status] || "bg-gray-100 text-gray-800"}`}>
+                    {order.status.replace(/_/g, " ")}
+                  </span>
                 </div>
+                <p className="text-sm font-medium text-gray-700">
+                  {order.customer?.firstName} {order.customer?.lastName}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {order.items?.length > 0 ? (
+                    <>
+                      {order.items[0]?.productTitle || "Product"} {order.items.length > 1 ? `+${order.items.length - 1} more` : ""}
+                    </>
+                  ) : "No items"}
+                </p>
               </div>
-              <div className="flex items-center gap-4">
-                <p className="text-lg font-bold text-gray-900">${order.totalPrice?.toFixed(2)}</p>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold capitalize border ${statusColors[order.status] || "bg-gray-100 text-gray-800"}`}>
-                  {order.status}
-                </span>
+              
+              <div className="flex items-center justify-between md:justify-end gap-6">
+                <div className="flex flex-col items-start md:items-end text-sm">
+                  <span className="font-bold text-gray-900">Rs. {order.totalPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span className="text-xs text-gray-500 capitalize">{order.paymentMethod}</span>
+                  <span className="text-[10px] text-gray-400">
+                    {new Date(order.orderDate).toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                </div>
                 <svg className={`w-5 h-5 text-gray-400 transition-transform ${expandedId === order._id ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
@@ -281,7 +299,19 @@ export default function OrdersPage() {
 
                   {/* Update Status */}
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Update Order Status</h4>
+                    <div className="flex items-center justify-between mb-2">
+                       <h4 className="text-sm font-semibold text-gray-700">Update Order Status</h4>
+                       <button
+                           onClick={() => {
+                               setPrintingOrderId(order._id);
+                               setTimeout(() => window.print(), 100);
+                           }}
+                           className="text-xs border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg transition-colors font-medium flex items-center gap-2"
+                       >
+                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                           Print Invoice
+                       </button>
+                    </div>
                     <div className="flex flex-wrap gap-2 mb-4">
                       {statuses.map((s) => (
                         <button
@@ -335,6 +365,14 @@ export default function OrdersPage() {
                     </div>
                   </div>
                 </div>
+                {/* Hidden Invoice for Printing */}
+                {printingOrderId === order._id && (
+                  <div className="hidden print:block">
+                    <div className="print-only">
+                      <OrderInvoice order={order as any} />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

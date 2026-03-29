@@ -21,18 +21,9 @@ export async function POST(req: Request) {
       client.fetch(`*[_type == "shippingZone"]`)
     ]);
 
-    let shippingCost = settings?.deliveryCharges || 0;
     let deliveryTime = "3-5 days"; // Default
-
-    // Check for free shipping threshold
-    if (settings?.freeShippingThreshold && cartTotal >= settings.freeShippingThreshold) {
-      return NextResponse.json({ 
-        shippingCost: 0, 
-        deliveryTime, 
-        isFree: true,
-        threshold: settings.freeShippingThreshold
-      });
-    }
+    let baseCharge = settings?.deliveryCharges || 0;
+    let discount = settings?.deliveryDiscount || 0;
 
     // Check if city belongs to a specific zone
     if (city && zones && zones.length > 0) {
@@ -41,13 +32,31 @@ export async function POST(req: Request) {
       );
 
       if (zone) {
-        shippingCost = zone.shippingCost;
+        baseCharge = zone.shippingCost;
         deliveryTime = zone.deliveryTimeEstimate;
       }
     }
 
+    // Global free shipping override OR free shipping threshold reached
+    const isFree = settings?.freeShipping || (settings?.freeShippingThreshold && cartTotal >= settings.freeShippingThreshold);
+
+    if (isFree) {
+      return NextResponse.json({ 
+        shippingCost: 0, 
+        baseCharge,
+        discount: 0,
+        deliveryTime, 
+        isFree: true,
+        threshold: settings?.freeShippingThreshold
+      });
+    }
+
+    const finalShippingCost = Math.max(0, baseCharge - discount);
+
     return NextResponse.json({ 
-      shippingCost, 
+      shippingCost: finalShippingCost, 
+      baseCharge,
+      discount,
       deliveryTime, 
       isFree: false,
       threshold: settings?.freeShippingThreshold 

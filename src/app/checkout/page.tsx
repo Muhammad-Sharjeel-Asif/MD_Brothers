@@ -26,6 +26,9 @@ const CheckOutPage = () => {
   });
 
   const [shippingCost, setShippingCost] = React.useState(0);
+  const [baseShippingCharge, setBaseShippingCharge] = React.useState(0);
+  const [shippingDiscount, setShippingDiscount] = React.useState(0);
+  const [isFreeShipping, setIsFreeShipping] = React.useState(false);
   const [deliveryTime, setDeliveryTime] = React.useState('');
   const [shippingThreshold, setShippingThreshold] = React.useState<number | null>(null);
 
@@ -86,6 +89,9 @@ const CheckOutPage = () => {
         const data = await res.json();
         if (data.shippingCost !== undefined) {
           setShippingCost(data.shippingCost);
+          setBaseShippingCharge(data.baseCharge || 0);
+          setShippingDiscount(data.discount || 0);
+          setIsFreeShipping(data.isFree || false);
           setDeliveryTime(data.deliveryTime);
           setShippingThreshold(data.threshold);
         }
@@ -383,6 +389,7 @@ const CheckOutPage = () => {
                 ))}
                 <span className="font-semibold">Subtotal</span>
                 <span className="font-semibold">Shipping</span>
+                {shippingDiscount > 0 && !isFreeShipping && <span className="font-semibold text-green-600">Discount</span>}
                 <span className="font-semibold text-lg">Total</span>
               </div>
               <div className="flex flex-col gap-3 text-right">
@@ -393,10 +400,13 @@ const CheckOutPage = () => {
                   </span>
                 ))}
                 <span>Rs. {cartTotal.toFixed(2)}</span>
-                <span className={shippingCost === 0 ? 'text-green-600 font-medium' : ''}>
-                  {shippingCost === 0 ? 'FREE' : `Rs. ${shippingCost.toFixed(2)}`}
+                <span className={isFreeShipping ? 'text-green-600 font-medium' : ''}>
+                  {isFreeShipping ? 'FREE' : `Rs. ${baseShippingCharge.toFixed(2)}`}
                   {deliveryTime && <div className="text-[10px] text-gray-500">Est. {deliveryTime}</div>}
                 </span>
+                {shippingDiscount > 0 && !isFreeShipping && (
+                  <span className="text-green-600 font-medium">- Rs. {shippingDiscount.toFixed(2)}</span>
+                )}
                 <span className="text-[#B88E2F] text-[24px] font-semibold">
                   Rs. {(cartTotal + shippingCost).toFixed(2)}
                 </span>

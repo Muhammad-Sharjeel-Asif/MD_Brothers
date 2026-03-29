@@ -23,20 +23,31 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats>({ totalProducts: 0, totalCategories: 0, pendingOrders: 0, activeDiscounts: 0 });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const [deliverySettings, setDeliverySettings] = useState({
+    deliveryCharges: 250,
+    freeShippingThreshold: 5000,
+    deliveryDiscount: 0,
+    freeShipping: false,
+    shippingMessage: "Fast delivery nationwide!",
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const [prodRes, catRes, ordRes, discRes] = await Promise.all([
+        const [prodRes, catRes, ordRes, discRes, settingsRes] = await Promise.all([
           fetch("/api/admin/products"),
           fetch("/api/admin/categories"),
           fetch("/api/admin/orders"),
           fetch("/api/admin/discounts"),
+          fetch("/api/admin/settings"),
         ]);
         const products = await prodRes.json();
         const categories = await catRes.json();
         const orders = await ordRes.json();
         const discounts = await discRes.json();
+        const settings = await settingsRes.json();
 
         setStats({
           totalProducts: products.length || 0,
@@ -45,6 +56,16 @@ export default function AdminDashboard() {
           activeDiscounts: (discounts || []).filter((d: any) => d.isActive).length,
         });
         setRecentOrders((orders || []).slice(0, 5));
+
+        if (settings && !settings.error) {
+          setDeliverySettings({
+            deliveryCharges: settings.deliveryCharges || 250,
+            freeShippingThreshold: settings.freeShippingThreshold || 5000,
+            deliveryDiscount: settings.deliveryDiscount || 0,
+            freeShipping: settings.freeShipping || false,
+            shippingMessage: settings.shippingMessage || "Fast delivery nationwide!",
+          });
+        }
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
       } finally {
@@ -67,6 +88,24 @@ export default function AdminDashboard() {
     shipped: "bg-indigo-100 text-indigo-800",
     delivered: "bg-green-100 text-green-800",
     cancelled: "bg-red-100 text-red-800",
+  };
+
+  const handleSaveSettings = async () => {
+    setSavingSettings(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(deliverySettings),
+      });
+      if (!res.ok) throw new Error("Failed to save settings");
+      alert("Delivery settings updated successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Error saving settings");
+    } finally {
+      setSavingSettings(false);
+    }
   };
 
   if (loading) {
@@ -106,6 +145,73 @@ export default function AdminDashboard() {
             </div>
           </Link>
         ))}
+      </div>
+
+      {/* Delivery Pricing Controls */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-8">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <svg className="w-5 h-5 text-[#B88E2F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+            </svg>
+            Delivery Pricing Controls
+          </h2>
+          <button 
+            disabled={savingSettings}
+            onClick={handleSaveSettings}
+            className="text-sm bg-[#B88E2F] hover:bg-[#8C6D23] text-white px-4 py-1.5 rounded-lg transition-colors font-medium disabled:opacity-50"
+          >
+            {savingSettings ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">Base Charge (Rs)</label>
+            <input 
+              type="number" 
+              value={deliverySettings.deliveryCharges}
+              onChange={(e) => setDeliverySettings({...deliverySettings, deliveryCharges: Number(e.target.value)})}
+              className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#B88E2F] focus:border-[#B88E2F] outline-none transition"
+              min="0"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">Discount (Rs)</label>
+            <input 
+              type="number" 
+              value={deliverySettings.deliveryDiscount}
+              onChange={(e) => setDeliverySettings({...deliverySettings, deliveryDiscount: Number(e.target.value)})}
+              className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#B88E2F] focus:border-[#B88E2F] outline-none transition"
+              min="0"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">Free Threshold (Rs)</label>
+            <input 
+              type="number" 
+              value={deliverySettings.freeShippingThreshold}
+              onChange={(e) => setDeliverySettings({...deliverySettings, freeShippingThreshold: Number(e.target.value)})}
+              className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#B88E2F] focus:border-[#B88E2F] outline-none transition"
+              min="0"
+            />
+          </div>
+          <div className="flex flex-col justify-end pb-1">
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <div className="relative">
+                <input 
+                  type="checkbox" 
+                  className="sr-only"
+                  checked={deliverySettings.freeShipping}
+                  onChange={(e) => setDeliverySettings({...deliverySettings, freeShipping: e.target.checked})}
+                />
+                <div className={`block w-10 h-6 rounded-full transition-colors ${deliverySettings.freeShipping ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${deliverySettings.freeShipping ? 'transform translate-x-4' : ''}`}></div>
+              </div>
+              <span className="text-sm font-semibold text-gray-700">Override: Free Shipping</span>
+            </label>
+            <p className="text-[10px] text-gray-500 mt-1 pl-1">If enabled, delivery is entirely free.</p>
+          </div>
+        </div>
       </div>
 
       {/* Recent Orders */}

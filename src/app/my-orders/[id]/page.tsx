@@ -363,7 +363,7 @@ export default function OrderDetailPage({
       <Feature />
       
       {/* Hidden Invoice for Printing */}
-      <div className="hidden">
+      <div className="hidden print:block">
         <div className="print-only">
           <OrderInvoice order={order as any} />
         </div>

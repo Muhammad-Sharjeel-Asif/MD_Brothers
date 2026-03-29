@@ -22,6 +22,21 @@ export const shippingSettings = defineType({
             validation: (rule) => rule.min(0),
         },
         {
+            name: 'deliveryDiscount',
+            type: 'number',
+            title: 'Delivery Discount',
+            description: 'Discount applied to the delivery charge.',
+            initialValue: 0,
+            validation: (rule) => rule.min(0),
+        },
+        {
+            name: 'freeShipping',
+            type: 'boolean',
+            title: 'Free Shipping Toggle',
+            description: 'Enable or disable global free shipping entirely.',
+            initialValue: false,
+        },
+        {
             name: 'shippingMessage',
             type: 'string',
             title: 'Shipping Message',

@@ -10,7 +10,13 @@ export async function GET() {
 
   try {
     const orders = await adminClient.fetch(`*[_type == "order"] | order(orderDate desc) {
-      _id, customer, items, totalPrice, status, paymentStatus, paymentMethod, orderDate, deliveryAgent, deliveryConfirmedAt,
+      _id, orderId, customer, 
+      items[] {
+        quantity,
+        price,
+        "productTitle": product->name
+      }, 
+      totalPrice, status, paymentStatus, paymentMethod, orderDate, deliveryAgent, deliveryConfirmedAt,
       gateway, transactionId, paymentTimestamp, paymentLogs,
       "proofImageUrl": proofImage.asset->url
     }`);

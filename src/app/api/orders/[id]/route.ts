@@ -23,6 +23,7 @@ export async function GET(
     const order = await adminClient.fetch(
       `*[_type == "order" && _id == $id][0] {
         _id,
+        orderId,
         clerkUserId,
         customer,
         items[] {
@@ -32,6 +33,7 @@ export async function GET(
           "productImage": product->imageUrl
         },
         totalPrice,
+        shippingCost,
         status,
         paymentStatus,
         paymentMethod,

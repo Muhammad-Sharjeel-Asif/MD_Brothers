@@ -22,7 +22,7 @@ export async function PUT(req: Request) {
 
   try {
     const body = await req.json();
-    const { deliveryCharges, freeShippingThreshold, shippingMessage } = body;
+    const { deliveryCharges, freeShippingThreshold, shippingMessage, deliveryDiscount, freeShipping } = body;
 
     const client = getAdminClient();
     if (!client) return NextResponse.json({ error: "Database connection failed" }, { status: 503 });
@@ -34,6 +34,8 @@ export async function PUT(req: Request) {
       await client.patch(existing._id).set({
         deliveryCharges: Number(deliveryCharges),
         freeShippingThreshold: Number(freeShippingThreshold),
+        deliveryDiscount: deliveryDiscount ? Number(deliveryDiscount) : 0,
+        freeShipping: Boolean(freeShipping),
         shippingMessage
       }).commit();
     } else {
@@ -41,6 +43,8 @@ export async function PUT(req: Request) {
         _type: 'shippingSettings',
         deliveryCharges: Number(deliveryCharges),
         freeShippingThreshold: Number(freeShippingThreshold),
+        deliveryDiscount: deliveryDiscount ? Number(deliveryDiscount) : 0,
+        freeShipping: Boolean(freeShipping),
         shippingMessage
       });
     }
