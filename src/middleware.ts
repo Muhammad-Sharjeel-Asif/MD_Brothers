@@ -6,7 +6,7 @@ const isAdminRoute = createRouteMatcher([
   "/api/admin(.*)"
 ]);
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "m.sharjeelasif1435@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "m.sharjeelasif1435@gmail.com" || "buzzteach07@gmail.com";
 
 export default clerkMiddleware(async (auth, req) => {
   if (isAdminRoute(req)) {
