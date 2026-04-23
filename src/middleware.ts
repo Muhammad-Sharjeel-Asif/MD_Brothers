@@ -6,7 +6,16 @@ const isAdminRoute = createRouteMatcher([
   "/api/admin(.*)"
 ]);
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "m.sharjeelasif1435@gmail.com" || "buzzteach07@gmail.com" || "iqbalasifsheikh0342@gmail.com" || "mdbrothersedu@gmail.com";
+// const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "m.sharjeelasif1435@gmail.com" || "buzzteach07@gmail.com" || "iqbalasifsheikh0342@gmail.com" || "mdbrothersedu@gmail.com";
+
+const ADMIN_EMAILS = process.env.ADMIN_EMAILS
+  ? process.env.ADMIN_EMAILS.split(",").map(e => e.trim())
+  : [
+    "m.sharjeelasif1435@gmail.com",
+    "buzzteach07@gmail.com",
+    "mdbrothersedu@gmail.com",
+    "iqbalasifsheikh0342@gmail.com",
+  ];
 
 export default clerkMiddleware(async (auth, req) => {
   if (isAdminRoute(req)) {
@@ -26,7 +35,7 @@ export default clerkMiddleware(async (auth, req) => {
 
       // If email is available in claims, validate admin access
       // Otherwise, let the in-route requireAdmin() handle it (defense-in-depth)
-      if (email && email !== ADMIN_EMAIL) {
+      if (email && !ADMIN_EMAILS.includes(email)) {
         // For page routes → redirect to forbidden page
         if (!req.nextUrl.pathname.startsWith("/api/")) {
           const url = req.nextUrl.clone();
