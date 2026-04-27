@@ -6,27 +6,41 @@ const isAdminRoute = createRouteMatcher([
   "/api/admin(.*)"
 ]);
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "m.sharjeelasif1435@gmail.com" || "buzzteach07@gmail.com" || "iqbalasifsheikh0342@gmail.com" || "mdbrothersedu@gmail.com";
+const ADMIN_EMAILS = [
+  process.env.ADMIN_EMAIL,
+  "m.sharjeelasif1435@gmail.com",
+  "buzzteach07@gmail.com",
+  "iqbalasifsheikh0342@gmail.com",
+  "mdbrothersedu@gmail.com"
+].filter(Boolean) as string[];
 
 export default clerkMiddleware(async (auth, req) => {
+  // Allow OPTIONS requests for preflight checks
+  if (req.method === 'OPTIONS') {
+    return NextResponse.next();
+  }
+
   if (isAdminRoute(req)) {
     try {
       const { userId, redirectToSignIn, sessionClaims } = await auth();
 
-      // Not logged in → redirect to Clerk sign-in
+      // Not logged in
       if (!userId) {
+        // For API routes, just allow them to pass through and be handled by the route's requireAdmin()
+        // This avoids middleware-level redirect issues for AJAX requests.
+        if (req.nextUrl.pathname.startsWith("/api/")) {
+          return NextResponse.next();
+        }
         return redirectToSignIn();
       }
 
-      // Check email from session claims (lighter than currentUser())
+      // Check email from session claims
       const email =
         (sessionClaims as any)?.email ??
         (sessionClaims as any)?.primary_email_address ??
         null;
 
-      // If email is available in claims, validate admin access
-      // Otherwise, let the in-route requireAdmin() handle it (defense-in-depth)
-      if (email && email !== ADMIN_EMAIL) {
+      if (email && !ADMIN_EMAILS.includes(email)) {
         // For page routes → redirect to forbidden page
         if (!req.nextUrl.pathname.startsWith("/api/")) {
           const url = req.nextUrl.clone();
@@ -43,6 +57,13 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.next();
     } catch (err) {
       console.error("Middleware Error:", err);
+      // For API routes, return 500 JSON
+      if (req.nextUrl.pathname.startsWith("/api/")) {
+        return NextResponse.json(
+          { error: "Internal server error during authentication" },
+          { status: 500 }
+        );
+      }
       return NextResponse.redirect(new URL("/", req.url));
     }
   }

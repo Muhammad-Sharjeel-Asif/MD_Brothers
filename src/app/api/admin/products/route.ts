@@ -9,14 +9,14 @@ export async function GET() {
   if (!isAuthContext(authResult)) return authResult;
 
   try {
-    const products = await adminClient.fetch(`*[_type == "product"] | order(_createdAt desc) {
+    const products = await adminClient.fetch(`*[_type == "product" && !(_id in path("drafts.**"))] | order(_createdAt desc) {
       _id,
       title,
       price,
       description,
       "imageUrl": productImage.asset->url,
       tags,
-      dicountPercentage,
+      discountPercentage,
       isNew,
       "categoryName": category->name,
       "categoryId": category->_id,
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       description: body.description,
       price: Number(body.price),
       tags: body.tags || [],
-      dicountPercentage: Number(body.discountPercentage) || 0,
+      discountPercentage: Number(body.discountPercentage) || 0,
       isNew: body.isNew || false,
       sku: body.sku,
     };
@@ -58,8 +58,11 @@ export async function POST(req: NextRequest) {
 
     const result = await adminClient.create(doc);
     return NextResponse.json(result, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating product:", error);
-    return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
+    return NextResponse.json({ 
+      error: error.message || "Failed to create product",
+      details: error.details || null
+    }, { status: 500 });
   }
 }

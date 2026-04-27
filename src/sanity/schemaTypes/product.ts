@@ -45,7 +45,7 @@ export const product = defineType({
             of: [{ type: "string" }]
         },
         {
-            name: "dicountPercentage",
+            name: "discountPercentage",
             type: "number",
             title: "Discount Percentage",
         },

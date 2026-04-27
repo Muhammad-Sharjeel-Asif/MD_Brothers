@@ -5,7 +5,7 @@ import { requireAdmin, isAuthContext } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  const authResult = await requireAdmin();
+  const authResult = await requireAdmin(req);
   if (!isAuthContext(authResult)) return authResult;
 
   try {

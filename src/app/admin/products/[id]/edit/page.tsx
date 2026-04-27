@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useAdminAuth } from "@/lib/useAdminAuth";
 
 interface Category {
   _id: string;
@@ -10,6 +11,7 @@ interface Category {
 
 export default function EditProductPage() {
   const router = useRouter();
+  const { authenticatedFetch } = useAdminAuth();
   const params = useParams();
   const id = params.id as string;
 
@@ -33,24 +35,30 @@ export default function EditProductPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`/api/admin/products/${id}`).then((r) => r.json()),
-      fetch("/api/admin/categories").then((r) => r.json()),
+      authenticatedFetch(`/api/admin/products/${id}`).then((r) => r.json()),
+      authenticatedFetch("/api/admin/categories").then((r) => r.json()),
     ]).then(([product, cats]) => {
-      setCategories(cats);
-      setForm({
-        title: product.title || "",
-        description: product.description || "",
-        price: String(product.price || ""),
-        sku: product.sku || "",
-        discountPercentage: String(product.dicountPercentage || ""),
-        isNew: product.isNew || false,
-        categoryId: product.categoryId || "",
-        tags: (product.tags || []).join(", "),
-        slug: product.slug || "",
-      });
-      if (product.imageUrl) setImagePreview(product.imageUrl);
+      setCategories(Array.isArray(cats) ? cats : []);
+      if (product && !product.error) {
+        setForm({
+          title: product.title || "",
+          description: product.description || "",
+          price: String(product.price || ""),
+          sku: product.sku || "",
+          discountPercentage: String(product.discountPercentage || ""),
+          isNew: product.isNew || false,
+          categoryId: product.categoryId || "",
+          tags: (product.tags || []).join(", "),
+          slug: product.slug || "",
+        });
+        if (product.imageUrl) setImagePreview(product.imageUrl);
+      }
       setLoading(false);
-    }).catch((err) => { console.error(err); setLoading(false); });
+    }).catch((err) => { 
+      console.error(err); 
+      setCategories([]);
+      setLoading(false); 
+    });
   }, [id]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,7 +77,7 @@ export default function EditProductPage() {
       if (imageFile) {
         const fd = new FormData();
         fd.append("file", imageFile);
-        const uploadRes = await fetch("/api/admin/upload", { method: "POST", body: fd });
+        const uploadRes = await authenticatedFetch("/api/admin/upload", { method: "POST", body: fd });
         const uploadData = await uploadRes.json();
         imageAssetId = uploadData.assetId;
       }
@@ -87,7 +95,7 @@ export default function EditProductPage() {
       };
       if (imageAssetId) body.imageAssetId = imageAssetId;
 
-      const res = await fetch(`/api/admin/products/${id}`, {
+      const res = await authenticatedFetch(`/api/admin/products/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -178,7 +186,7 @@ export default function EditProductPage() {
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#B88E2F] focus:ring-2 focus:ring-[#B88E2F]/20 outline-none text-sm"
               >
                 <option value="">Select category</option>
-                {categories.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+                {Array.isArray(categories) && categories.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
               </select>
             </div>
             <div>

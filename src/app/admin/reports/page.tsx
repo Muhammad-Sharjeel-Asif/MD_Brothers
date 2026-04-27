@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useAdminAuth } from "@/lib/useAdminAuth";
 
 interface ReportsData {
   sales: {
@@ -34,12 +35,13 @@ const tabs = [
 ];
 
 export default function ReportsPage() {
+  const { authenticatedFetch } = useAdminAuth();
   const [data, setData] = useState<ReportsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("sales");
 
   useEffect(() => {
-    fetch("/api/admin/reports")
+    authenticatedFetch("/api/admin/reports")
       .then((r) => r.json())
       .then(setData)
       .catch(console.error)

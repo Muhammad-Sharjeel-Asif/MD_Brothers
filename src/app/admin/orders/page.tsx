@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import OrderInvoice from "@/components/OrderInvoice";
+import { useAdminAuth } from "@/lib/useAdminAuth";
 
 interface Order {
   _id: string;
@@ -40,6 +41,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function OrdersPage() {
+  const { authenticatedFetch } = useAdminAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -58,7 +60,7 @@ export default function OrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch("/api/admin/orders");
+      const res = await authenticatedFetch("/api/admin/orders");
       const data = await res.json();
       setOrders(data);
     } catch (err) {
@@ -71,7 +73,7 @@ export default function OrdersPage() {
   const updateStatus = async (id: string, updates: Partial<Order>) => {
     setUpdating(id);
     try {
-      await fetch("/api/admin/orders", {
+      await authenticatedFetch("/api/admin/orders", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, ...updates }),

@@ -12,7 +12,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const product = await adminClient.fetch(
       `*[_type == "product" && _id == $id][0] {
         _id, title, price, description, "imageUrl": productImage.asset->url,
-        tags, dicountPercentage, isNew, "categoryId": category->_id,
+        tags, discountPercentage, isNew, "categoryId": category->_id,
         "categoryName": category->name, sku, "slug": slug.current
       }`,
       { id: params.id }
@@ -36,7 +36,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (body.description) patch = patch.set({ description: body.description });
     if (body.price !== undefined) patch = patch.set({ price: Number(body.price) });
     if (body.tags) patch = patch.set({ tags: body.tags });
-    if (body.discountPercentage !== undefined) patch = patch.set({ dicountPercentage: Number(body.discountPercentage) });
+    if (body.discountPercentage !== undefined) patch = patch.set({ discountPercentage: Number(body.discountPercentage) });
     if (body.isNew !== undefined) patch = patch.set({ isNew: body.isNew });
     if (body.sku) patch = patch.set({ sku: body.sku });
     if (body.slug) patch = patch.set({ slug: { _type: "slug", current: body.slug } });
@@ -56,7 +56,18 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   if (!isAuthContext(authResult)) return authResult;
 
   try {
-    await adminClient.delete(params.id);
+    const id = params.id;
+
+    // Delete the published document
+    await adminClient.delete(id);
+
+    // Also delete the draft version if it exists (won't throw if missing)
+    try {
+      await adminClient.delete(`drafts.${id}`);
+    } catch {
+      // Draft doesn't exist, that's fine
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });

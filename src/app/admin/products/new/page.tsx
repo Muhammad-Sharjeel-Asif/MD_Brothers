@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAdminAuth } from "@/lib/useAdminAuth";
 
 interface Category {
   _id: string;
@@ -10,6 +11,7 @@ interface Category {
 
 export default function NewProductPage() {
   const router = useRouter();
+  const { authenticatedFetch } = useAdminAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -28,10 +30,13 @@ export default function NewProductPage() {
   });
 
   useEffect(() => {
-    fetch("/api/admin/categories")
+    authenticatedFetch("/api/admin/categories")
       .then((r) => r.json())
-      .then(setCategories)
-      .catch(console.error);
+      .then((data) => setCategories(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        console.error("Failed to fetch categories:", err);
+        setCategories([]);
+      });
   }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,9 +56,22 @@ export default function NewProductPage() {
       if (imageFile) {
         const fd = new FormData();
         fd.append("file", imageFile);
-        const uploadRes = await fetch("/api/admin/upload", { method: "POST", body: fd });
+        const uploadRes = await authenticatedFetch("/api/admin/upload", { 
+          method: "POST", 
+          body: fd,
+        });
+        if (!uploadRes.ok) {
+          const errorData = await uploadRes.json();
+          throw new Error(errorData.error || "Image upload failed");
+        }
         const uploadData = await uploadRes.json();
         imageAssetId = uploadData.assetId;
+      } else {
+        throw new Error("Please upload a product image");
+      }
+
+      if (!form.categoryId) {
+        throw new Error("Please select a category");
       }
 
       const body = {
@@ -64,20 +82,28 @@ export default function NewProductPage() {
         imageAssetId,
       };
 
-      const res = await fetch("/api/admin/products", {
+      const res = await authenticatedFetch("/api/admin/products", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(body),
       });
 
       if (res.ok) {
         router.push("/admin/products");
       } else {
-        alert("Failed to create product");
+        const errorData = await res.json();
+        const msg = errorData.error || "Unknown error";
+        if (msg.includes("Authentication required")) {
+          alert(`Authentication Error: The server could not find your session. \n\nPossible solutions:\n1. Refresh the page.\n2. Log out and log back in.\n3. Ensure you are not in Incognito mode with third-party cookies blocked.`);
+        } else {
+          alert(`Failed to create product: ${msg}`);
+        }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Error creating product");
+      alert(err.message || "Error creating product");
     } finally {
       setSaving(false);
     }
@@ -162,14 +188,19 @@ export default function NewProductPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
               <select
+                required
                 value={form.categoryId}
                 onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#B88E2F] focus:ring-2 focus:ring-[#B88E2F]/20 outline-none text-sm"
               >
                 <option value="">Select category</option>
-                {categories.map((c) => (
-                  <option key={c._id} value={c._id}>{c.name}</option>
-                ))}
+                {Array.isArray(categories) && categories.length > 0 ? (
+                  categories.map((c) => (
+                    <option key={c._id} value={c._id}>{c.name}</option>
+                  ))
+                ) : (
+                  <option disabled>No categories found - Please create one first</option>
+                )}
               </select>
             </div>
             <div>

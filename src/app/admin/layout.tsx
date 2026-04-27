@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useUser, SignedIn, SignedOut, RedirectToSignIn } from "@clerk/nextjs";
 
 const navItems = [
   {
@@ -64,7 +64,7 @@ const navItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user } = useUser();
+  const { isLoaded, user } = useUser();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [config, setConfig] = useState({ isSanityConfigured: true, isPayFastConfigured: true });
 
@@ -75,97 +75,114 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .catch(() => setConfig({ isSanityConfigured: false, isPayFastConfigured: false }));
   }, []);
 
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <div className="w-10 h-10 border-4 border-[#B88E2F] border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-gray-500 font-medium">Validating Admin Access...</p>
+      </div>
+    );
+  }
+
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
     return pathname.startsWith(href);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col pt-[80px]">
-      {(!config.isSanityConfigured || !config.isPayFastConfigured) && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-amber-800 text-sm flex items-center justify-center gap-2">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <span>
-            <b>Configuration Warning:</b> 
-            {!config.isSanityConfigured && " Sanity CMS is not configured."}
-            {!config.isPayFastConfigured && " PayFast integration is not configured."}
-            Check your environment variables.
-          </span>
-        </div>
-      )}
-      <div className="flex flex-1">
-      {/* Mobile sidebar toggle */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="md:hidden fixed top-[90px] left-4 z-50 bg-[#B88E2F] text-white p-2 rounded-lg shadow-lg"
-      >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={sidebarOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
-        </svg>
-      </button>
-
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {/* Sidebar */}
-      <aside className={`fixed md:sticky top-[80px] left-0 z-40 w-64 h-[calc(100vh-80px)] bg-white border-r border-gray-200 flex flex-col transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        {/* Admin header */}
-        <div className="px-6 py-5 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#B88E2F] to-[#8C6D23] flex items-center justify-center text-white font-bold text-sm">
-              {user?.firstName?.charAt(0) || "A"}
+    <>
+      <SignedIn>
+        <div className="min-h-screen bg-gray-50 flex flex-col pt-[80px]">
+          {(!config.isSanityConfigured || !config.isPayFastConfigured) && (
+            <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-amber-800 text-sm flex items-center justify-center gap-2">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>
+                <b>Configuration Warning:</b> 
+                {!config.isSanityConfigured && " Sanity CMS is not configured."}
+                {!config.isPayFastConfigured && " PayFast integration is not configured."}
+                Check your environment variables.
+              </span>
             </div>
-            <div>
-              <p className="font-semibold text-gray-900 text-sm">Admin Panel</p>
-              <p className="text-xs text-gray-500">{user?.firstName || "Administrator"}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                isActive(item.href)
-                  ? "bg-[#B88E2F] text-white shadow-md shadow-[#B88E2F]/20"
-                  : "text-gray-600 hover:bg-[#F9F1E7] hover:text-[#B88E2F]"
-              }`}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Footer */}
-        <div className="px-4 py-4 border-t border-gray-100">
-          <Link
-            href="/"
-            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+          )}
+          <div className="flex flex-1">
+          {/* Mobile sidebar toggle */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="md:hidden fixed top-[90px] left-4 z-50 bg-[#B88E2F] text-white p-2 rounded-lg shadow-lg"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={sidebarOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
             </svg>
-            Back to Store
-          </Link>
-        </div>
-      </aside>
+          </button>
 
-      {/* Main content */}
-      <main className="flex-1 min-h-[calc(100vh-80px)] md:ml-0">
-        <div className="p-4 md:p-8 max-w-7xl mx-auto">
-          {children}
+          {/* Overlay for mobile */}
+          {sidebarOpen && (
+            <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />
+          )}
+
+          {/* Sidebar */}
+          <aside className={`fixed md:sticky top-[80px] left-0 z-40 w-64 h-[calc(100vh-80px)] bg-white border-r border-gray-200 flex flex-col transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+            {/* Admin header */}
+            <div className="px-6 py-5 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#B88E2F] to-[#8C6D23] flex items-center justify-center text-white font-bold text-sm">
+                  {user?.firstName?.charAt(0) || "A"}
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm">Admin Panel</p>
+                  <p className="text-xs text-gray-500">{user?.firstName || "Administrator"}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    isActive(item.href)
+                      ? "bg-[#B88E2F] text-white shadow-md shadow-[#B88E2F]/20"
+                      : "text-gray-600 hover:bg-[#F9F1E7] hover:text-[#B88E2F]"
+                  }`}
+                >
+                  {item.icon}
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            {/* Footer */}
+            <div className="px-4 py-4 border-t border-gray-100">
+              <Link
+                href="/"
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                </svg>
+                Back to Store
+              </Link>
+            </div>
+          </aside>
+
+          {/* Main content */}
+          <main className="flex-1 min-h-[calc(100vh-80px)] md:ml-0">
+            <div className="p-4 md:p-8 max-w-7xl mx-auto">
+              {children}
+            </div>
+          </main>
+          </div>
         </div>
-      </main>
-      </div>
-    </div>
+      </SignedIn>
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
+    </>
   );
 }
+

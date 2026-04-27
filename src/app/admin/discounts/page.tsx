@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useAdminAuth } from "@/lib/useAdminAuth";
 
 interface Discount {
   _id: string;
@@ -14,6 +15,7 @@ interface Discount {
 }
 
 export default function DiscountsPage() {
+  const { authenticatedFetch } = useAdminAuth();
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -35,7 +37,7 @@ export default function DiscountsPage() {
 
   const fetchDiscounts = async () => {
     try {
-      const res = await fetch("/api/admin/discounts");
+      const res = await authenticatedFetch("/api/admin/discounts");
       const data = await res.json();
       setDiscounts(data);
     } catch (err) {
@@ -49,7 +51,7 @@ export default function DiscountsPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch("/api/admin/discounts", {
+      const res = await authenticatedFetch("/api/admin/discounts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

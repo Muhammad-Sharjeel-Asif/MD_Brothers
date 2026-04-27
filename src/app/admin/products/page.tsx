@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useAdminAuth } from "@/lib/useAdminAuth";
 
 interface Product {
   _id: string;
@@ -13,12 +14,13 @@ interface Product {
   categoryName: string;
   sku: string;
   isNew: boolean;
-  dicountPercentage: number;
+  discountPercentage: number;
   tags: string[];
   _createdAt: string;
 }
 
 export default function ProductsPage() {
+  const { authenticatedFetch } = useAdminAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -30,9 +32,9 @@ export default function ProductsPage() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch("/api/admin/products");
+      const res = await authenticatedFetch("/api/admin/products");
       const data = await res.json();
-      setProducts(data);
+      setProducts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -44,7 +46,7 @@ export default function ProductsPage() {
     if (!confirm("Are you sure you want to delete this product?")) return;
     setDeleting(id);
     try {
-      await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
+      await authenticatedFetch(`/api/admin/products/${id}`, { method: "DELETE" });
       setProducts((prev) => prev.filter((p) => p._id !== id));
     } catch (err) {
       console.error(err);
@@ -146,9 +148,9 @@ export default function ProductsPage() {
                     {product.isNew && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">New</span>
                     )}
-                    {product.dicountPercentage > 0 && (
+                    {product.discountPercentage > 0 && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 ml-1">
-                        -{product.dicountPercentage}%
+                        -{product.discountPercentage}%
                       </span>
                     )}
                   </td>

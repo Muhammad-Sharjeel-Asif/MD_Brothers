@@ -191,7 +191,7 @@ const ProductSearch = () => {
           title,
           price,
           description,
-          "discountPercentage": coalesce(dicountPercentage, 0),
+          "discountPercentage": coalesce(discountPercentage, 0),
           "imageUrl": productImage.asset->url,
           tags,
           "slug": slug.current,

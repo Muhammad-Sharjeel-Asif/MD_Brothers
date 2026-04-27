@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useAdminAuth } from "@/lib/useAdminAuth";
 
 interface Category {
   _id: string;
@@ -12,6 +13,7 @@ interface Category {
 }
 
 export default function CategoriesPage() {
+  const { authenticatedFetch } = useAdminAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -24,7 +26,7 @@ export default function CategoriesPage() {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch("/api/admin/categories");
+      const res = await authenticatedFetch("/api/admin/categories");
       const data = await res.json();
       setCategories(data);
     } catch (err) {
@@ -38,7 +40,7 @@ export default function CategoriesPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch("/api/admin/categories", {
+      const res = await authenticatedFetch("/api/admin/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

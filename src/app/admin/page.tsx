@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useAdminAuth } from "@/lib/useAdminAuth";
 
 interface DashboardStats {
   totalProducts: number;
@@ -20,6 +21,7 @@ interface RecentOrder {
 }
 
 export default function AdminDashboard() {
+  const { authenticatedFetch } = useAdminAuth();
   const [stats, setStats] = useState<DashboardStats>({ totalProducts: 0, totalCategories: 0, pendingOrders: 0, activeDiscounts: 0 });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,11 +39,11 @@ export default function AdminDashboard() {
     const fetchDashboard = async () => {
       try {
         const [prodRes, catRes, ordRes, discRes, settingsRes] = await Promise.all([
-          fetch("/api/admin/products"),
-          fetch("/api/admin/categories"),
-          fetch("/api/admin/orders"),
-          fetch("/api/admin/discounts"),
-          fetch("/api/admin/settings"),
+          authenticatedFetch("/api/admin/products"),
+          authenticatedFetch("/api/admin/categories"),
+          authenticatedFetch("/api/admin/orders"),
+          authenticatedFetch("/api/admin/discounts"),
+          authenticatedFetch("/api/admin/settings"),
         ]);
         const products = await prodRes.json();
         const categories = await catRes.json();
@@ -93,7 +95,7 @@ export default function AdminDashboard() {
   const handleSaveSettings = async () => {
     setSavingSettings(true);
     try {
-      const res = await fetch("/api/admin/settings", {
+      const res = await authenticatedFetch("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(deliverySettings),

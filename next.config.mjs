@@ -1,9 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     productionBrowserSourceMaps: true,
-    swcMinify: true,
-    images:{
-        domains: ["cdn.sanity.io"],
+    images: {
+        remotePatterns: [
+            {
+                protocol: "https",
+                hostname: "cdn.sanity.io",
+            },
+        ],
     },
     experimental: {
         instrumentationHook: true,
@@ -11,4 +15,3 @@ const nextConfig = {
 };
 
 export default nextConfig;
-

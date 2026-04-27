@@ -1,6 +1,9 @@
 import { getEnv, requireEnv } from '@/lib/env'
 
-export const apiVersion = getEnv('NEXT_PUBLIC_SANITY_API_VERSION', '2025-01-18')
+export const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || '2025-01-18'
+export const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || 'production'
+export const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || ''
 
-export const dataset = requireEnv('NEXT_PUBLIC_SANITY_DATASET', 'Sanity Dataset')
-export const projectId = requireEnv('NEXT_PUBLIC_SANITY_PROJECT_ID', 'Sanity Project ID')
+if (!projectId && typeof window !== 'undefined') {
+    console.warn("⚠️ NEXT_PUBLIC_SANITY_PROJECT_ID is missing in client-side environment.");
+}
